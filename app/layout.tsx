@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Form Manager | Vidyanvesha",
+  title: "Exams Manager | Vidyanvesha",
   description: "Professional form and quiz management system for educational institutions",
 };
 
