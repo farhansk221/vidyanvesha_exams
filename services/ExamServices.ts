@@ -1,6 +1,32 @@
 import { API_CONTS } from "@/lib/api";
 import { firebaseService } from "@/lib/firebaseService";
 
+export interface PaginatedResponse<T> {
+    count: number;
+    next: string | null;
+    previous: string | null;
+    results: T[];
+}
+
+export interface Program {
+    id: number;
+    prog_name?: string;
+    [key: string]: any;
+}
+
+export interface ProgramRevision {
+    id: number;
+    prog_rev_name?: string;
+    [key: string]: any;
+}
+
+export interface Course {
+    id: number;
+    course_name?: string;
+    course_code?: string;
+    [key: string]: any;
+}
+
 export interface Exam {
     id?: number;
     exam_session: number | null;
@@ -39,6 +65,7 @@ export interface Exam {
 }
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+const CORE_BASE_URL = process.env.NEXT_PUBLIC_API_URL_CORE || "http://localhost:8001";
 
 const getAuthHeaders = async (): Promise<HeadersInit> => {
     const token = await firebaseService.getUserAccessToken();
@@ -49,7 +76,7 @@ const getAuthHeaders = async (): Promise<HeadersInit> => {
 };
 
 export const ExamService = {
-    async getAll(): Promise<Exam[]> {
+    async getAll(): Promise<PaginatedResponse<Exam>> {
         const headers = await getAuthHeaders();
         const response = await fetch(`${BASE_URL}${API_CONTS.EXAMS.LIST}`, { headers });
         if (!response.ok) throw new Error("Failed to fetch exams");
@@ -93,4 +120,28 @@ export const ExamService = {
         const response = await fetch(`${BASE_URL}${url}`, { method: "DELETE", headers });
         if (!response.ok) throw new Error("Failed to delete exam");
     },
+
+    async getPrograms(): Promise<Program[]> {
+        const headers = await getAuthHeaders();
+        const response = await fetch(`${CORE_BASE_URL}/programs/`, { headers });
+        if (!response.ok) throw new Error("Failed to fetch programs");
+        const data = await response.json();
+        return data.results ? data.results : data;
+    },
+
+    async getProgramRevisions(): Promise<ProgramRevision[]> {
+        const headers = await getAuthHeaders();
+        const response = await fetch(`${CORE_BASE_URL}/program-revisions/`, { headers });
+        if (!response.ok) throw new Error("Failed to fetch program revisions");
+        const data = await response.json();
+        return data.results ? data.results : data;
+    },
+
+    async getCourses(): Promise<Course[]> {
+        const headers = await getAuthHeaders();
+        const response = await fetch(`${CORE_BASE_URL}/courses/`, { headers });
+        if (!response.ok) throw new Error("Failed to fetch courses");
+        const data = await response.json();
+        return data.results ? data.results : data;
+    }
 };

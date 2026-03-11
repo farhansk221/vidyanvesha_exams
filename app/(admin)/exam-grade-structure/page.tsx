@@ -1,7 +1,9 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Plus, Search } from "lucide-react";
+import { Plus, Search, Eye, Edit, Trash, Loader2, Pencil } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -12,8 +14,52 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
+import { ExamGradeStructureService, type ExamGradeStructure } from "@/services/ExamGradeStructureService";
 
 export default function ExamGradeStructurePage() {
+    const [structures, setStructures] = useState<ExamGradeStructure[]>([]);
+    const [programsMap, setProgramsMap] = useState<Record<number, string>>({});
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
+    const fetchData = async () => {
+        try {
+            setIsLoading(true);
+            const [structuresData, programsData] = await Promise.all([
+                ExamGradeStructureService.getAll(),
+                ExamGradeStructureService.getPrograms().catch(() => [])
+            ]);
+
+            setStructures(structuresData);
+
+            const map: Record<number, string> = {};
+            programsData.forEach((prog) => {
+                map[prog.id] = prog.prog_name || `Program ${prog.id}`;
+            });
+            setProgramsMap(map);
+        } catch (err) {
+            console.error(err);
+            setError("Failed to load exam grade structures");
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchData();
+    }, []);
+
+    const handleDelete = async (id: number) => {
+        if (!window.confirm("Are you sure you want to delete this grade structure?")) return;
+        try {
+            await ExamGradeStructureService.delete(id);
+            toast.success("Grade structure deleted successfully");
+            fetchData();
+        } catch (error) {
+            console.error(error);
+            toast.error("Failed to delete grade structure");
+        }
+    };
     return (
         <div className="p-6 space-y-6">
             <div>
@@ -40,18 +86,68 @@ export default function ExamGradeStructurePage() {
                         <TableRow>
                             <TableHead>ID</TableHead>
                             <TableHead>GRADE</TableHead>
+                            <TableHead>PROGRAM</TableHead>
                             <TableHead>MIN MARKS</TableHead>
                             <TableHead>MAX MARKS</TableHead>
-                            <TableHead>GRADE POINT</TableHead>
+                            <TableHead>PASSING</TableHead>
                             <TableHead>ACTIONS</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        <TableRow>
-                            <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
-                                No grade structures found. Click &quot;Create Grade Structure&quot; to get started.
-                            </TableCell>
-                        </TableRow>
+                        {isLoading ? (
+                            <TableRow>
+                                <TableCell colSpan={7} className="h-24 text-center">
+                                    <Loader2 className="h-6 w-6 animate-spin mx-auto text-muted-foreground" />
+                                </TableCell>
+                            </TableRow>
+                        ) : error ? (
+                            <TableRow>
+                                <TableCell colSpan={7} className="h-24 text-center text-red-500">
+                                    {error}
+                                </TableCell>
+                            </TableRow>
+                        ) : structures.length === 0 ? (
+                            <TableRow>
+                                <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
+                                    No grade structures found. Click &quot;Create Grade Structure&quot; to get started.
+                                </TableCell>
+                            </TableRow>
+                        ) : (
+                            structures.map((structure) => (
+                                <TableRow key={structure.id}>
+                                    <TableCell>{structure.id}</TableCell>
+                                    <TableCell className="font-medium">{structure.grade}</TableCell>
+                                    <TableCell>
+                                        {structure.program
+                                            ? programsMap[structure.program] || structure.program
+                                            : "N/A"}
+                                    </TableCell>
+                                    <TableCell>{structure.min_marks ?? "N/A"}</TableCell>
+                                    <TableCell>{structure.max_marks ?? "N/A"}</TableCell>
+                                    <TableCell>{structure.passing_grade_flag ? "Yes" : "No"}</TableCell>
+                                    <TableCell>
+                                        <div className="flex items-center gap-2">
+                                            <Link href={`/exam-grade-structure/${structure.id}`}>
+                                                <Button variant="outline" size="sm">
+                                                    <Eye className="h-4 w-4" />
+                                                </Button>
+                                            </Link>
+                                            <Link href={`/exam-grade-structure/${structure.id}/edit`}>
+                                                <Button variant="outline" size="sm">
+                                                    <Pencil className="h-4 w-4" />
+                                                </Button>
+                                            </Link>
+                                            <Button variant="outline" size="sm"
+                                                onClick={() => structure.id && handleDelete(structure.id)}
+                                                className="text-red-500 hover:text-red-700"
+                                            >
+                                                <Trash className="h-4 w-4" />
+                                            </Button>
+                                        </div>
+                                    </TableCell>
+                                </TableRow>
+                            ))
+                        )}
                     </TableBody>
                 </Table>
             </div>

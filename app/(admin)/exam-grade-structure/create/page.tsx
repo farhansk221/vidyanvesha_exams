@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
@@ -17,7 +17,14 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/ui/card";
-import type { ExamGradeStructure } from "@/services/ExamGradeStructureService";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
+import { ExamGradeStructureService, type ExamGradeStructure, type Program } from "@/services/ExamGradeStructureService";
 
 const defaultFormData: Omit<ExamGradeStructure, "id"> = {
     min_marks: null,
@@ -33,7 +40,21 @@ const defaultFormData: Omit<ExamGradeStructure, "id"> = {
 export default function CreateExamGradeStructurePage() {
     const router = useRouter();
     const [formData, setFormData] = useState<Omit<ExamGradeStructure, "id">>(defaultFormData);
+    const [programs, setPrograms] = useState<Program[]>([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
+
+    useEffect(() => {
+        const fetchPrograms = async () => {
+            try {
+                const data = await ExamGradeStructureService.getPrograms();
+                setPrograms(data);
+            } catch (error) {
+                console.error("Failed to fetch programs:", error);
+                toast.error("Failed to load programs for dropdown");
+            }
+        };
+        fetchPrograms();
+    }, []);
 
     const handleInputChange = (field: keyof typeof formData, value: string | number | boolean | null) => {
         setFormData((prev) => ({ ...prev, [field]: value }));
@@ -43,8 +64,7 @@ export default function CreateExamGradeStructurePage() {
         e.preventDefault();
         setIsSubmitting(true);
         try {
-            await new Promise((resolve) => setTimeout(resolve, 500));
-            console.log("Submitted data:", formData);
+            await ExamGradeStructureService.create(formData);
             toast.success("Grade structure created successfully!");
             router.push("/exam-grade-structure");
         } catch {
@@ -129,14 +149,22 @@ export default function CreateExamGradeStructurePage() {
                             />
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="program">Program ID</Label>
-                            <Input
-                                id="program"
-                                type="number"
-                                placeholder="e.g. 10"
-                                value={formData.program ?? ""}
-                                onChange={(e) => handleInputChange("program", e.target.value ? Number(e.target.value) : null)}
-                            />
+                            <Label htmlFor="program">Program</Label>
+                            <Select
+                                value={formData.program ? String(formData.program) : ""}
+                                onValueChange={(val) => handleInputChange("program", Number(val))}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select a program" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {programs.map((prog) => (
+                                        <SelectItem key={prog.id} value={String(prog.id)}>
+                                            {prog.prog_name || `Program ${prog.id}`}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                         </div>
                     </CardContent>
                 </Card>

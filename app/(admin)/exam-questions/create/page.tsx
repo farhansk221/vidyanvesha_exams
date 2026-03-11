@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
@@ -9,6 +9,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
+import {
     Card,
     CardContent,
     CardDescription,
@@ -16,7 +23,9 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/ui/card";
-import type { ExamQuestion } from "@/services/ExamQuestionService";
+import { ExamQuestionService, type ExamQuestion, type Question } from "@/services/ExamQuestionService";
+import { ExamService, type Exam } from "@/services/ExamServices";
+import { ExamSessionService } from "@/services/ExamSessionServices";
 
 const defaultFormData: Omit<ExamQuestion, "id"> = {
     exam: null,
@@ -35,6 +44,51 @@ export default function CreateExamQuestionPage() {
     const [formData, setFormData] = useState<Omit<ExamQuestion, "id">>(defaultFormData);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
+    const [questions, setQuestions] = useState<Question[]>([]);
+    const [exams, setExams] = useState<Exam[]>([]);
+    const [sessionsMap, setSessionsMap] = useState<Record<number, string>>({});
+    const [programsMap, setProgramsMap] = useState<Record<number, string>>({});
+    const [coursesMap, setCoursesMap] = useState<Record<number, string>>({});
+
+    useEffect(() => {
+        const fetchDropdownData = async () => {
+            try {
+                const [qData, eData, sData, pData, cData] = await Promise.all([
+                    ExamQuestionService.getQuestions().catch(() => []),
+                    ExamService.getAll().catch(() => ({ results: [] })),
+                    ExamSessionService.getAll().catch(() => ({ results: [] })),
+                    ExamService.getPrograms().catch(() => []),
+                    ExamService.getCourses().catch(() => [])
+                ]);
+
+                setQuestions(qData);
+                setExams(eData.results || []);
+
+                const sMap: Record<number, string> = {};
+                (sData.results || []).forEach((s) => { sMap[s.id as number] = s.exam_session_name || `Session ${s.id}`; });
+                setSessionsMap(sMap);
+
+                const pMap: Record<number, string> = {};
+                pData.forEach((p) => { pMap[p.id] = p.prog_name || `Program ${p.id}`; });
+                setProgramsMap(pMap);
+
+                const cMap: Record<number, string> = {};
+                cData.forEach((c) => { cMap[c.id] = c.course_name || `Course ${c.id}`; });
+                setCoursesMap(cMap);
+
+            } catch (error) {
+                console.error("Error fetching dropdowns:", error);
+                toast.error("Failed to load options");
+            }
+        };
+
+        fetchDropdownData();
+    }, []);
+
+    const handleSelectChange = (field: keyof typeof formData, value: string) => {
+        setFormData((prev) => ({ ...prev, [field]: value === "none" ? null : Number(value) }));
+    };
+
     const handleInputChange = (field: keyof typeof formData, value: string | number | null) => {
         setFormData((prev) => ({ ...prev, [field]: value }));
     };
@@ -43,8 +97,8 @@ export default function CreateExamQuestionPage() {
         e.preventDefault();
         setIsSubmitting(true);
         try {
-            await new Promise((resolve) => setTimeout(resolve, 500));
-            console.log("Submitted data:", formData);
+            await ExamQuestionService.create(formData);
+            console.log(formData)
             toast.success("Exam question created successfully!");
             router.push("/exam-questions");
         } catch {
@@ -77,22 +131,42 @@ export default function CreateExamQuestionPage() {
                     </CardHeader>
                     <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-2">
-                            <Label htmlFor="exam">Exam ID *</Label>
-                            <Input
-                                id="exam"
-                                type="number"
-                                placeholder="e.g. 1"
-                                value={formData.exam ?? ""}
-                                onChange={(e) => handleInputChange("exam", e.target.value ? Number(e.target.value) : null)}
+                            <Label htmlFor="exam">Exam *</Label>
+                            <Select
+                                value={formData.exam ? String(formData.exam) : undefined}
+                                onValueChange={(val) => handleSelectChange("exam", val)}
                                 required
-                            />
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select an Exam" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {exams.map((exam) => {
+                                        const progName = exam.prog ? programsMap[exam.prog] || `Prog ${exam.prog}` : "";
+                                        const sessionName = exam.exam_session ? sessionsMap[exam.exam_session] || `Session ${exam.exam_session}` : "";
+                                        const className = exam.stud_class || "";
+                                        const courseName = exam.course ? coursesMap[exam.course] || `Course ${exam.course}` : "";
+                                        const assessType = exam.direct_or_indirect || "";
+                                        const categoryName = exam.exam_category || "";
+                                        const durationName = exam.exam_duration || "None";
+
+                                        const label = [progName, sessionName, className, courseName, assessType, categoryName, durationName].filter(Boolean).join(" - ") || `Exam ${exam.id}`;
+
+                                        return (
+                                            <SelectItem key={exam.id} value={String(exam.id)}>
+                                                {label}
+                                            </SelectItem>
+                                        );
+                                    })}
+                                </SelectContent>
+                            </Select>
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="question">Question ID *</Label>
                             <Input
                                 id="question"
                                 type="number"
-                                placeholder="e.g. 9001"
+                                placeholder="e.g. 101"
                                 value={formData.question ?? ""}
                                 onChange={(e) => handleInputChange("question", e.target.value ? Number(e.target.value) : null)}
                                 required

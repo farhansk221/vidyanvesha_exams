@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
@@ -17,8 +17,15 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/ui/card";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import type { ExamSession } from "@/services/ExamSessionServices";
+import { ExamSessionService, type ExamSession, type AcademicSession } from "@/services/ExamSessionServices";
 
 const defaultFormData: Omit<ExamSession, "id"> = {
     exam_session_name: "",
@@ -52,7 +59,21 @@ const defaultFormData: Omit<ExamSession, "id"> = {
 export default function CreateExamSessionPage() {
     const router = useRouter();
     const [formData, setFormData] = useState<Omit<ExamSession, "id">>(defaultFormData);
+    const [academicSessions, setAcademicSessions] = useState<AcademicSession[]>([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
+
+    useEffect(() => {
+        const fetchAcademicSessions = async () => {
+            try {
+                const sessions = await ExamSessionService.getAcademicSessions();
+                setAcademicSessions(sessions);
+            } catch (error) {
+                console.error("Failed to fetch academic sessions:", error);
+            }
+        };
+
+        fetchAcademicSessions();
+    }, []);
 
     const handleInputChange = (field: keyof typeof formData, value: string | number | boolean | null) => {
         setFormData((prev) => ({ ...prev, [field]: value }));
@@ -62,12 +83,11 @@ export default function CreateExamSessionPage() {
         e.preventDefault();
         setIsSubmitting(true);
         try {
-            // Backend not ready — mock success
-            await new Promise((resolve) => setTimeout(resolve, 500));
-            console.log("Submitted data:", formData);
+            await ExamSessionService.create(formData);
             toast.success("Exam session created successfully!");
             router.push("/exam-sessions");
-        } catch {
+        } catch (error) {
+            console.error(error);
             toast.error("Failed to create exam session.");
         } finally {
             setIsSubmitting(false);
@@ -117,15 +137,21 @@ export default function CreateExamSessionPage() {
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="academic_session_id">Academic Session ID</Label>
-                            <Input
-                                id="academic_session_id"
-                                type="number"
-                                placeholder="e.g. 2026"
-                                value={formData.academic_session_id ?? ""}
-                                onChange={(e) =>
-                                    handleInputChange("academic_session_id", e.target.value ? Number(e.target.value) : null)
-                                }
-                            />
+                            <Select
+                                value={formData.academic_session_id ? String(formData.academic_session_id) : ""}
+                                onValueChange={(val) => handleInputChange("academic_session_id", Number(val))}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select an academic session" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {academicSessions.map((session) => (
+                                        <SelectItem key={session.id} value={String(session.id)}>
+                                            {session.session_name || session.academic_session_name || session.name || `Session ${session.id}`}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="exam_session_start_date">Start Date *</Label>

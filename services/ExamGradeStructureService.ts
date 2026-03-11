@@ -13,6 +13,21 @@ export interface ExamGradeStructure {
     program: number | null;
 }
 
+export interface Program {
+    id: number;
+    prog_name: string;
+    prog_duration: string;
+    prog_desc: string;
+    prog_inst_prog: number | null;
+    prog_inst_type: number | null;
+    prog_department: number | null;
+    prog_hall_ticket_abbr: string | null;
+    base_program: boolean;
+    institute: number | null;
+    university: number | null;
+    [key: string]: any;
+}
+
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
 
 const getAuthHeaders = async (): Promise<HeadersInit> => {
@@ -69,4 +84,13 @@ export const ExamGradeStructureService = {
         const response = await fetch(`${BASE_URL}${url}`, { method: "DELETE", headers });
         if (!response.ok) throw new Error("Failed to delete exam grade structure");
     },
+    
+    async getPrograms(): Promise<Program[]> {
+        const headers = await getAuthHeaders();
+        const CORE_BASE_URL = process.env.NEXT_PUBLIC_API_URL_CORE || "http://localhost:8001";
+        const response = await fetch(`${CORE_BASE_URL}/programs/`, { headers });
+        if (!response.ok) throw new Error("Failed to fetch programs");
+        const data = await response.json();
+        return data.results ? data.results : data;
+    }
 };

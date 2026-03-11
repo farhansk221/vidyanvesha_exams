@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
@@ -17,7 +17,14 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/ui/card";
-import type { ExamGradeStructure } from "@/services/ExamGradeStructureService";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
+import { ExamGradeStructureService, type ExamGradeStructure, type Program } from "@/services/ExamGradeStructureService";
 
 const mockData: Omit<ExamGradeStructure, "id"> = {
     min_marks: 75,
@@ -36,7 +43,31 @@ export default function EditExamGradeStructurePage() {
     const id = params.id as string;
 
     const [formData, setFormData] = useState<Omit<ExamGradeStructure, "id">>(mockData);
+    const [programs, setPrograms] = useState<Program[]>([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchData = async () => {
+            if (!id) return;
+            try {
+                setIsLoading(true);
+                const [gradeStructure, programsData] = await Promise.all([
+                    ExamGradeStructureService.getById(Number(id)),
+                    ExamGradeStructureService.getPrograms().catch(() => [])
+                ]);
+                const { id: _, ...rest } = gradeStructure;
+                setFormData(rest as Omit<ExamGradeStructure, "id">);
+                setPrograms(programsData);
+            } catch (error) {
+                console.error("Failed to fetch data:", error);
+                toast.error("Failed to load details for editing");
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchData();
+    }, [id]);
 
     const handleInputChange = (field: keyof typeof formData, value: string | number | boolean | null) => {
         setFormData((prev) => ({ ...prev, [field]: value }));
@@ -46,8 +77,7 @@ export default function EditExamGradeStructurePage() {
         e.preventDefault();
         setIsSubmitting(true);
         try {
-            await new Promise((resolve) => setTimeout(resolve, 500));
-            console.log("Updated data for id", id, ":", formData);
+            await ExamGradeStructureService.update(Number(id), formData);
             toast.success("Grade structure updated successfully!");
             router.push("/exam-grade-structure");
         } catch {
@@ -71,7 +101,10 @@ export default function EditExamGradeStructurePage() {
                 </div>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-6">
+            {isLoading ? (
+                <div className="flex justify-center p-8">Loading...</div>
+            ) : (
+                <form onSubmit={handleSubmit} className="space-y-6">
                 <Card>
                     <CardHeader>
                         <CardTitle>Grade Details</CardTitle>
@@ -132,14 +165,22 @@ export default function EditExamGradeStructurePage() {
                             />
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="program">Program ID</Label>
-                            <Input
-                                id="program"
-                                type="number"
-                                placeholder="e.g. 10"
-                                value={formData.program ?? ""}
-                                onChange={(e) => handleInputChange("program", e.target.value ? Number(e.target.value) : null)}
-                            />
+                            <Label htmlFor="program">Program</Label>
+                            <Select
+                                value={formData.program ? String(formData.program) : ""}
+                                onValueChange={(val) => handleInputChange("program", Number(val))}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select a program" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {programs.map((prog) => (
+                                        <SelectItem key={prog.id} value={String(prog.id)}>
+                                            {prog.prog_name || `Program ${prog.id}`}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                         </div>
                     </CardContent>
                 </Card>
@@ -183,6 +224,7 @@ export default function EditExamGradeStructurePage() {
                     </CardFooter>
                 </Card>
             </form>
+            )}
         </div>
     );
 }

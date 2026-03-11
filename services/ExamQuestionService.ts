@@ -1,6 +1,25 @@
 import { API_CONTS } from "@/lib/api";
 import { firebaseService } from "@/lib/firebaseService";
 
+export interface PaginatedResponse<T> {
+    count: number;
+    next: string | null;
+    previous: string | null;
+    results: T[];
+}
+
+export interface Question {
+    id: number;
+    question_desc?: string;
+    course?: number;
+    course_name?: string;
+    bl_level?: number;
+    bl_level_display?: string;
+    question_type?: number;
+    question_type_name?: string;
+    [key: string]: any;
+}
+
 export interface ExamQuestion {
     id?: number;
     exam: number | null;
@@ -24,8 +43,23 @@ const getAuthHeaders = async (): Promise<HeadersInit> => {
     };
 };
 
+const sanitizeData = (data: any): any => {
+    const allowedFields = [
+        "exam", "question", "question_label", "question_sequence", 
+        "max_marks", "marking_synoptic", "students_attempted_count", 
+        "students_above_cutoff_count", "percentage_of_students_above_cutoff"
+    ];
+    const cleaned: any = {};
+    allowedFields.forEach(field => {
+        if (field in data) {
+            cleaned[field] = data[field];
+        }
+    });
+    return cleaned;
+};
+
 export const ExamQuestionService = {
-    async getAll(): Promise<ExamQuestion[]> {
+    async getAll(): Promise<PaginatedResponse<ExamQuestion>> {
         const headers = await getAuthHeaders();
         const response = await fetch(`${BASE_URL}${API_CONTS.EXAM_QUESTIONS.LIST}`, { headers });
         if (!response.ok) throw new Error("Failed to fetch exam questions");
@@ -42,24 +76,34 @@ export const ExamQuestionService = {
 
     async create(data: Omit<ExamQuestion, "id">): Promise<ExamQuestion> {
         const headers = await getAuthHeaders();
+        const cleanedData = sanitizeData(data);
         const response = await fetch(`${BASE_URL}${API_CONTS.EXAM_QUESTIONS.CREATE}`, {
             method: "POST",
             headers,
-            body: JSON.stringify(data),
+            body: JSON.stringify(cleanedData),
         });
-        if (!response.ok) throw new Error("Failed to create exam question");
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            console.error("Create Exam Question Error:", errorData);
+            throw new Error(errorData.detail || "Failed to create exam question");
+        }
         return response.json();
     },
 
     async update(id: number, data: Omit<ExamQuestion, "id">): Promise<ExamQuestion> {
         const headers = await getAuthHeaders();
+        const cleanedData = sanitizeData(data);
         const url = API_CONTS.EXAM_QUESTIONS.UPDATE.replace(":id", String(id));
         const response = await fetch(`${BASE_URL}${url}`, {
             method: "PUT",
             headers,
-            body: JSON.stringify(data),
+            body: JSON.stringify(cleanedData),
         });
-        if (!response.ok) throw new Error("Failed to update exam question");
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            console.error("Update Exam Question Error:", errorData);
+            throw new Error(errorData.detail || "Failed to update exam question");
+        }
         return response.json();
     },
 
@@ -69,4 +113,13 @@ export const ExamQuestionService = {
         const response = await fetch(`${BASE_URL}${url}`, { method: "DELETE", headers });
         if (!response.ok) throw new Error("Failed to delete exam question");
     },
+
+    async getQuestions(): Promise<Question[]> {
+        const headers = await getAuthHeaders();
+        const CORE_BASE_URL = process.env.NEXT_PUBLIC_API_URL_CORE || "http://localhost:8001";
+        const response = await fetch(`${CORE_BASE_URL}/questions/`, { headers });
+        if (!response.ok) throw new Error("Failed to fetch questions");
+        const data = await response.json();
+        return data.results ? data.results : data;
+    }
 };

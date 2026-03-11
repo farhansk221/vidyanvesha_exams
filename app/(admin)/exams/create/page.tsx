@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
@@ -18,11 +18,19 @@ import {
     CardTitle,
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import type { Exam } from "@/services/ExamServices";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
+import { ExamService, type Exam, type Program, type ProgramRevision, type Course } from "@/services/ExamServices";
+import { ExamSessionService, type ExamSession } from "@/services/ExamSessionServices";
 
 const defaultFormData: Omit<Exam, "id"> = {
     exam_session: null,
-    stud_class: null,
+    stud_class: 101,
     prog: null,
     prog_rev: null,
     institute_rev: null,
@@ -60,6 +68,36 @@ export default function CreateExamPage() {
     const router = useRouter();
     const [formData, setFormData] = useState<Omit<Exam, "id">>(defaultFormData);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
+
+    const [sessions, setSessions] = useState<ExamSession[]>([]);
+    const [programs, setPrograms] = useState<Program[]>([]);
+    const [revisions, setRevisions] = useState<ProgramRevision[]>([]);
+    const [courses, setCourses] = useState<Course[]>([]);
+
+    useEffect(() => {
+        const fetchDropdownData = async () => {
+            try {
+                setIsLoading(true);
+                const [sessionsData, programsData, revisionsData, coursesData] = await Promise.all([
+                    ExamSessionService.getAll().catch(() => ({ results: [] })),
+                    ExamService.getPrograms().catch(() => []),
+                    ExamService.getProgramRevisions().catch(() => []),
+                    ExamService.getCourses().catch(() => [])
+                ]);
+                setSessions(sessionsData.results || []);
+                setPrograms(programsData);
+                setRevisions(revisionsData);
+                setCourses(coursesData);
+            } catch (err) {
+                console.error("Failed to load options", err);
+                toast.error("Failed to load dropdown options");
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchDropdownData();
+    }, []);
 
     const handleInputChange = (field: keyof typeof formData, value: string | number | boolean | null) => {
         setFormData((prev) => ({ ...prev, [field]: value }));
@@ -69,8 +107,7 @@ export default function CreateExamPage() {
         e.preventDefault();
         setIsSubmitting(true);
         try {
-            await new Promise((resolve) => setTimeout(resolve, 500));
-            console.log("Submitted data:", formData);
+            await ExamService.create(formData);
             toast.success("Exam created successfully!");
             router.push("/exams");
         } catch {
@@ -79,6 +116,14 @@ export default function CreateExamPage() {
             setIsSubmitting(false);
         }
     };
+
+    if (isLoading) {
+        return (
+            <div className="flex h-screen items-center justify-center">
+                <p className="text-muted-foreground animate-pulse">Loading form data...</p>
+            </div>
+        );
+    }
 
     return (
         <div className="p-6 max-w-4xl mx-auto space-y-6">
@@ -104,14 +149,22 @@ export default function CreateExamPage() {
                     <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-2">
                             <Label htmlFor="exam_session">Exam Session ID *</Label>
-                            <Input
-                                id="exam_session"
-                                type="number"
-                                placeholder="e.g. 1"
-                                value={formData.exam_session ?? ""}
-                                onChange={(e) => handleInputChange("exam_session", e.target.value ? Number(e.target.value) : null)}
+                            <Select
+                                value={formData.exam_session ? String(formData.exam_session) : ""}
+                                onValueChange={(val) => handleInputChange("exam_session", Number(val))}
                                 required
-                            />
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select an exam session" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {sessions.map((session) => (
+                                        <SelectItem key={session.id} value={String(session.id)}>
+                                            {session.exam_session_name || `Session ${session.id}`}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="stud_class">Student Class ID</Label>
@@ -124,24 +177,40 @@ export default function CreateExamPage() {
                             />
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="prog">Program ID</Label>
-                            <Input
-                                id="prog"
-                                type="number"
-                                placeholder="e.g. 10"
-                                value={formData.prog ?? ""}
-                                onChange={(e) => handleInputChange("prog", e.target.value ? Number(e.target.value) : null)}
-                            />
+                            <Label htmlFor="prog">Program</Label>
+                            <Select
+                                value={formData.prog ? String(formData.prog) : ""}
+                                onValueChange={(val) => handleInputChange("prog", Number(val))}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select a program" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {programs.map((prog) => (
+                                        <SelectItem key={prog.id} value={String(prog.id)}>
+                                            {prog.prog_name || `Program ${prog.id}`}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="prog_rev">Program Revision</Label>
-                            <Input
-                                id="prog_rev"
-                                type="number"
-                                placeholder="e.g. 3"
-                                value={formData.prog_rev ?? ""}
-                                onChange={(e) => handleInputChange("prog_rev", e.target.value ? Number(e.target.value) : null)}
-                            />
+                            <Select
+                                value={formData.prog_rev ? String(formData.prog_rev) : ""}
+                                onValueChange={(val) => handleInputChange("prog_rev", Number(val))}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select a revision" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {revisions.map((rev) => (
+                                        <SelectItem key={rev.id} value={String(rev.id)}>
+                                            {rev.prog_rev_name || `Revision ${rev.id}`}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="institute_rev">Institute Revision</Label>
@@ -174,14 +243,22 @@ export default function CreateExamPage() {
                             />
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="course">Course ID</Label>
-                            <Input
-                                id="course"
-                                type="number"
-                                placeholder="e.g. 2001"
-                                value={formData.course ?? ""}
-                                onChange={(e) => handleInputChange("course", e.target.value ? Number(e.target.value) : null)}
-                            />
+                            <Label htmlFor="course">Course</Label>
+                            <Select
+                                value={formData.course ? String(formData.course) : ""}
+                                onValueChange={(val) => handleInputChange("course", Number(val))}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select a course" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {courses.map((course) => (
+                                        <SelectItem key={course.id} value={String(course.id)}>
+                                            {course.course_name || `Course ${course.id}`} ({course.course_code})
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                         </div>
                     </CardContent>
                 </Card>

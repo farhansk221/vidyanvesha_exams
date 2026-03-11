@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
@@ -9,6 +9,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
+import {
     Card,
     CardContent,
     CardDescription,
@@ -16,7 +23,9 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/ui/card";
-import type { ExamQuestion } from "@/services/ExamQuestionService";
+import { ExamQuestionService, type ExamQuestion, type Question } from "@/services/ExamQuestionService";
+import { ExamService, type Exam } from "@/services/ExamServices";
+import { ExamSessionService } from "@/services/ExamSessionServices";
 
 const mockExamQuestion: Omit<ExamQuestion, "id"> = {
     exam: 1,
@@ -37,6 +46,62 @@ export default function EditExamQuestionPage() {
 
     const [formData, setFormData] = useState<Omit<ExamQuestion, "id">>(mockExamQuestion);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isLoadingData, setIsLoadingData] = useState(true);
+
+    const [questions, setQuestions] = useState<Question[]>([]);
+    const [exams, setExams] = useState<Exam[]>([]);
+    const [sessionsMap, setSessionsMap] = useState<Record<number, string>>({});
+    const [programsMap, setProgramsMap] = useState<Record<number, string>>({});
+    const [coursesMap, setCoursesMap] = useState<Record<number, string>>({});
+
+    useEffect(() => {
+        const fetchAllData = async () => {
+            try {
+                setIsLoadingData(true);
+                const [eqDetails, qData, eData, sData, pData, cData] = await Promise.all([
+                    ExamQuestionService.getById(Number(id)),
+                    ExamQuestionService.getQuestions().catch(() => []),
+                    ExamService.getAll().catch(() => ({ results: [] })),
+                    ExamSessionService.getAll().catch(() => ({ results: [] })),
+                    ExamService.getPrograms().catch(() => []),
+                    ExamService.getCourses().catch(() => [])
+                ]);
+
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                const { id: _, ...restEqDetails } = eqDetails as any;
+                setFormData(restEqDetails);
+
+                setQuestions(qData);
+                setExams(eData.results || []);
+
+                const sMap: Record<number, string> = {};
+                (sData.results || []).forEach((s) => { sMap[s.id as number] = s.exam_session_name || `Session ${s.id}`; });
+                setSessionsMap(sMap);
+
+                const pMap: Record<number, string> = {};
+                pData.forEach((p) => { pMap[p.id] = p.prog_name || `Program ${p.id}`; });
+                setProgramsMap(pMap);
+
+                const cMap: Record<number, string> = {};
+                cData.forEach((c) => { cMap[c.id] = c.course_name || `Course ${c.id}`; });
+                setCoursesMap(cMap);
+
+            } catch (error) {
+                console.error("Error fetching data:", error);
+                toast.error("Failed to load question details or options");
+            } finally {
+                setIsLoadingData(false);
+            }
+        };
+
+        if (id) {
+            fetchAllData();
+        }
+    }, [id]);
+
+    const handleSelectChange = (field: keyof typeof formData, value: string) => {
+        setFormData((prev) => ({ ...prev, [field]: value === "none" ? null : Number(value) }));
+    };
 
     const handleInputChange = (field: keyof typeof formData, value: string | number | null) => {
         setFormData((prev) => ({ ...prev, [field]: value }));
@@ -46,8 +111,7 @@ export default function EditExamQuestionPage() {
         e.preventDefault();
         setIsSubmitting(true);
         try {
-            await new Promise((resolve) => setTimeout(resolve, 500));
-            console.log("Updated data for id", id, ":", formData);
+            await ExamQuestionService.update(Number(id), formData);
             toast.success("Exam question updated successfully!");
             router.push("/exam-questions");
         } catch {
@@ -71,7 +135,12 @@ export default function EditExamQuestionPage() {
                 </div>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-6">
+            {isLoadingData ? (
+                <div className="flex justify-center p-8">
+                    <p className="text-muted-foreground">Loading details...</p>
+                </div>
+            ) : (
+                <form onSubmit={handleSubmit} className="space-y-6">
                 {/* Question Details */}
                 <Card>
                     <CardHeader>
@@ -80,22 +149,42 @@ export default function EditExamQuestionPage() {
                     </CardHeader>
                     <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-2">
-                            <Label htmlFor="exam">Exam ID *</Label>
-                            <Input
-                                id="exam"
-                                type="number"
-                                placeholder="e.g. 1"
-                                value={formData.exam ?? ""}
-                                onChange={(e) => handleInputChange("exam", e.target.value ? Number(e.target.value) : null)}
+                            <Label htmlFor="exam">Exam *</Label>
+                            <Select
+                                value={formData.exam ? String(formData.exam) : undefined}
+                                onValueChange={(val) => handleSelectChange("exam", val)}
                                 required
-                            />
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select an Exam" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {exams.map((exam) => {
+                                        const progName = exam.prog ? programsMap[exam.prog] || `Prog ${exam.prog}` : "";
+                                        const sessionName = exam.exam_session ? sessionsMap[exam.exam_session] || `Session ${exam.exam_session}` : "";
+                                        const className = exam.stud_class || "";
+                                        const courseName = exam.course ? coursesMap[exam.course] || `Course ${exam.course}` : "";
+                                        const assessType = exam.direct_or_indirect || "";
+                                        const categoryName = exam.exam_category || ""; 
+                                        const durationName = exam.exam_duration || "None";
+                                        
+                                        const label = [progName, sessionName, className, courseName, assessType, categoryName, durationName].filter(Boolean).join(" - ") || `Exam ${exam.id}`;
+                                        
+                                        return (
+                                            <SelectItem key={exam.id} value={String(exam.id)}>
+                                                {label}
+                                            </SelectItem>
+                                        );
+                                    })}
+                                </SelectContent>
+                            </Select>
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="question">Question ID *</Label>
                             <Input
                                 id="question"
                                 type="number"
-                                placeholder="e.g. 9001"
+                                placeholder="e.g. 101"
                                 value={formData.question ?? ""}
                                 onChange={(e) => handleInputChange("question", e.target.value ? Number(e.target.value) : null)}
                                 required
@@ -192,6 +281,7 @@ export default function EditExamQuestionPage() {
                     </CardFooter>
                 </Card>
             </form>
+            )}
         </div>
     );
 }

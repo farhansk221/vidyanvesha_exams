@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,27 +17,33 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/ui/card";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import type { ExamSession } from "@/services/ExamSessionServices";
+import { ExamSessionService, type ExamSession, type AcademicSession } from "@/services/ExamSessionServices";
 
-// Mock data for edit — will be replaced by API call when backend is ready
-const mockExamSession: Omit<ExamSession, "id"> = {
-    exam_session_name: "End Semester May 2026",
-    exam_session_held_in: "May-2026",
-    exam_session_start_date: "2026-05-01",
-    exam_session_end_date: "2026-05-20",
+const defaultFormData: Omit<ExamSession, "id"> = {
+    exam_session_name: "",
+    exam_session_held_in: "",
+    exam_session_start_date: "",
+    exam_session_end_date: "",
     exam_session_regular: true,
     exam_session_collect_exam_fees: false,
-    exam_session_exam_form_released: true,
-    exam_session_exam_form_released_dt: "2026-03-10",
-    exam_session_exam_form_submission_dt: "2026-03-25",
-    academic_session_id: 2026,
+    exam_session_exam_form_released: false,
+    exam_session_exam_form_released_dt: null,
+    exam_session_exam_form_submission_dt: null,
+    academic_session_id: null,
     automatic_exam_generated: false,
     exam_seat_no_generated: false,
     exam_seat_no_generated_dt: null,
     exam_seat_no_has_to_be_borrowed: false,
     exam_seat_no_to_be_borrowed_from_id: null,
-    hallticket_year_or_other_notation: "2026",
+    hallticket_year_or_other_notation: "",
     hallticket_generated: false,
     hallticket_generated_dt: null,
     hallticket_released: false,
@@ -46,7 +52,7 @@ const mockExamSession: Omit<ExamSession, "id"> = {
     grade_penalty_level: null,
     freeze_marks: false,
     freeze_marks_dt: null,
-    exam_year_difference_allowed: 2,
+    exam_year_difference_allowed: null,
     release_student_results: false,
 };
 
@@ -55,8 +61,34 @@ export default function EditExamSessionPage() {
     const params = useParams();
     const id = params.id as string;
 
-    const [formData, setFormData] = useState<Omit<ExamSession, "id">>(mockExamSession);
+    const [formData, setFormData] = useState<Omit<ExamSession, "id">>(defaultFormData);
+    const [academicSessions, setAcademicSessions] = useState<AcademicSession[]>([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        if (!id) return;
+        const fetchData = async () => {
+            try {
+                setIsLoading(true);
+                const [sessionData, academicSessionsData] = await Promise.all([
+                    ExamSessionService.getById(Number(id)),
+                    ExamSessionService.getAcademicSessions().catch(() => []) 
+                ]);
+                
+                const { id: _, ...session } = sessionData;
+                setFormData(session);
+                setAcademicSessions(academicSessionsData);
+            } catch (error) {
+                console.error("Failed to fetch data:", error);
+                toast.error("Failed to load exam session details");
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchData();
+    }, [id]);
 
     const handleInputChange = (field: keyof typeof formData, value: string | number | boolean | null) => {
         setFormData((prev) => ({ ...prev, [field]: value }));
@@ -66,17 +98,24 @@ export default function EditExamSessionPage() {
         e.preventDefault();
         setIsSubmitting(true);
         try {
-            // Backend not ready — mock success
-            await new Promise((resolve) => setTimeout(resolve, 500));
-            console.log("Updated data for id", id, ":", formData);
+            await ExamSessionService.update(Number(id), formData);
             toast.success("Exam session updated successfully!");
             router.push("/exam-sessions");
-        } catch {
+        } catch (error) {
+            console.error(error);
             toast.error("Failed to update exam session.");
         } finally {
             setIsSubmitting(false);
         }
     };
+
+    if (isLoading) {
+        return (
+            <div className="flex h-screen items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+        );
+    }
 
     return (
         <div className="p-6 max-w-4xl mx-auto space-y-6">
@@ -121,15 +160,21 @@ export default function EditExamSessionPage() {
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="academic_session_id">Academic Session ID</Label>
-                            <Input
-                                id="academic_session_id"
-                                type="number"
-                                placeholder="e.g. 2026"
-                                value={formData.academic_session_id ?? ""}
-                                onChange={(e) =>
-                                    handleInputChange("academic_session_id", e.target.value ? Number(e.target.value) : null)
-                                }
-                            />
+                            <Select
+                                value={formData.academic_session_id ? String(formData.academic_session_id) : ""}
+                                onValueChange={(val) => handleInputChange("academic_session_id", Number(val))}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select an academic session" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {academicSessions.map((session) => (
+                                        <SelectItem key={session.id} value={String(session.id)}>
+                                            {session.session_name || session.academic_session_name || session.name || `Session ${session.id}`}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="exam_session_start_date">Start Date *</Label>
