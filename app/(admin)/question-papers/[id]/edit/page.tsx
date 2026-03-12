@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,16 +17,17 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/ui/card";
+import { QuestionPaperService } from "@/services/QuestionPaperService";
 import type { QuestionPaper } from "@/services/QuestionPaperService";
 
-const mockData: Omit<QuestionPaper, "id"> = {
-    qp_name: "Data Structures End Sem 2026",
-    qp_code: "QP-DS-2026-001",
-    qp_desc: "End semester question paper",
-    qp_pattern: "Theory",
-    qp_total_marks: 100,
-    qp_passing_marks: 40,
-    is_final: true,
+const defaultFormData: Omit<QuestionPaper, "id"> = {
+    qp_name: "",
+    qp_code: "",
+    qp_desc: "",
+    qp_pattern: "",
+    qp_total_marks: null,
+    qp_passing_marks: null,
+    is_final: false,
     qp_pdf: null,
 };
 
@@ -35,8 +36,27 @@ export default function EditQuestionPaperPage() {
     const params = useParams();
     const id = params.id as string;
 
-    const [formData, setFormData] = useState<Omit<QuestionPaper, "id">>(mockData);
+    const [formData, setFormData] = useState<Omit<QuestionPaper, "id">>(defaultFormData);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        if (!id) return;
+        const fetchData = async () => {
+            try {
+                setIsLoading(true);
+                const data = await QuestionPaperService.getById(Number(id));
+                const { id: _ignored, ...rest } = data;
+                setFormData(rest);
+            } catch (error) {
+                console.error("Failed to load question paper", error);
+                toast.error("Failed to load question paper");
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchData();
+    }, [id]);
 
     const handleInputChange = (field: keyof typeof formData, value: string | number | boolean | null) => {
         setFormData((prev) => ({ ...prev, [field]: value }));
@@ -46,16 +66,24 @@ export default function EditQuestionPaperPage() {
         e.preventDefault();
         setIsSubmitting(true);
         try {
-            await new Promise((resolve) => setTimeout(resolve, 500));
-            console.log("Updated data for id", id, ":", formData);
+            await QuestionPaperService.update(Number(id), formData);
             toast.success("Question paper updated successfully!");
             router.push("/question-papers");
-        } catch {
+        } catch (error) {
+            console.error("Error updating question paper", error);
             toast.error("Failed to update question paper.");
         } finally {
             setIsSubmitting(false);
         }
     };
+
+    if (isLoading) {
+        return (
+            <div className="flex h-screen items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+        );
+    }
 
     return (
         <div className="p-6 max-w-4xl mx-auto space-y-6">

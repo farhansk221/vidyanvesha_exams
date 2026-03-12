@@ -13,42 +13,52 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/ui/card";
-import { QuestionPaperService, type QuestionPaper } from "@/services/QuestionPaperService";
+import { ExamQuestionMarksAnonymousService, type ExamQuestionMarksAnonymous } from "@/services/ExamQuestionMarksAnonymousService";
+import { ExamQuestionService, type ExamQuestion } from "@/services/ExamQuestionService";
 
-export default function ViewQuestionPaperPage() {
+export default function ViewAnonymousMarkPage() {
     const params = useParams();
     const router = useRouter();
     const id = params.id as string;
 
-    const [paper, setPaper] = useState<QuestionPaper | null>(null);
+    const [record, setRecord] = useState<ExamQuestionMarksAnonymous | null>(null);
+    const [questionMap, setQuestionMap] = useState<Record<number, ExamQuestion>>({});
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
         if (!id) return;
-        const fetchPaper = async () => {
+        const fetchData = async () => {
             try {
                 setIsLoading(true);
-                const data = await QuestionPaperService.getById(Number(id));
-                setPaper(data);
+                const [rec, qdata] = await Promise.all([
+                    ExamQuestionMarksAnonymousService.getById(Number(id)),
+                    ExamQuestionService.getAll().catch(() => ({ results: [] })),
+                ]);
+                setRecord(rec);
+                const map: Record<number, ExamQuestion> = {};
+                (qdata.results || []).forEach((q) => {
+                    if (q.id !== undefined) map[q.id] = q;
+                });
+                setQuestionMap(map);
             } catch (error) {
-                console.error("Failed to fetch question paper:", error);
-                toast.error("Failed to load question paper");
+                console.error(error);
+                toast.error("Failed to load record");
             } finally {
                 setIsLoading(false);
             }
         };
-        fetchPaper();
+        fetchData();
     }, [id]);
 
     const handleDelete = async () => {
-        if (!window.confirm("Are you sure you want to delete this question paper?")) return;
+        if (!window.confirm("Are you sure you want to delete this record?")) return;
         try {
-            await QuestionPaperService.delete(Number(id));
-            toast.success("Question paper deleted successfully");
-            router.push("/question-papers");
+            await ExamQuestionMarksAnonymousService.delete(Number(id));
+            toast.success("Record deleted successfully");
+            router.push("/exam_question_marks_anonymous");
         } catch (error) {
             console.error(error);
-            toast.error("Failed to delete question paper");
+            toast.error("Failed to delete record");
         }
     };
 
@@ -60,12 +70,12 @@ export default function ViewQuestionPaperPage() {
         );
     }
 
-    if (!paper) {
+    if (!record) {
         return (
             <div className="p-6 text-center space-y-4">
-                <h1 className="text-2xl font-bold tracking-tight">Question Paper Not Found</h1>
-                <p className="text-muted-foreground">The question paper with ID {id} could not be found.</p>
-                <Link href="/question-papers">
+                <h1 className="text-2xl font-bold tracking-tight">Record Not Found</h1>
+                <p className="text-muted-foreground">The record with ID {id} could not be found.</p>
+                <Link href="/exam_question_marks_anonymous">
                     <Button>Back to List</Button>
                 </Link>
             </div>
@@ -81,18 +91,20 @@ export default function ViewQuestionPaperPage() {
         </div>
     );
 
+    const questionLabel = record.exam_question ? questionMap[record.exam_question]?.question_label || `Q${record.exam_question}` : '-';
+
     return (
         <div className="p-6 max-w-4xl mx-auto space-y-6">
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                    <Link href="/question-papers">
+                    <Link href="/exam_question_marks_anonymous">
                         <Button variant="ghost" size="icon">
                             <ArrowLeft className="h-5 w-5" />
                         </Button>
                     </Link>
                     <div>
-                        <h1 className="text-2xl font-bold tracking-tight">{paper.qp_name}</h1>
-                        <p className="text-muted-foreground">ID: {paper.id}</p>
+                        <h1 className="text-2xl font-bold tracking-tight">Anonymous Mark</h1>
+                        <p className="text-muted-foreground">ID: {record.id}</p>
                     </div>
                 </div>
                 <div className="flex items-center gap-2">
@@ -100,7 +112,7 @@ export default function ViewQuestionPaperPage() {
                         <Trash className="mr-2 h-4 w-4" />
                         Delete
                     </Button>
-                    <Link href={`/question-papers/${id}/edit`}>
+                    <Link href={`/exam_question_marks_anonymous/${id}/edit`}>
                         <Button>
                             <Edit className="mr-2 h-4 w-4" />
                             Edit
@@ -112,18 +124,13 @@ export default function ViewQuestionPaperPage() {
             <Card>
                 <CardHeader>
                     <CardTitle>Details</CardTitle>
-                    <CardDescription>Basic information about this question paper</CardDescription>
+                    <CardDescription>Data for this anonymous mark</CardDescription>
                 </CardHeader>
                 <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <DetailItem label="Code" value={paper.qp_code} />
-                    <DetailItem label="Pattern" value={paper.qp_pattern} />
-                    <DetailItem label="Total Marks" value={paper.qp_total_marks} />
-                    <DetailItem label="Passing Marks" value={paper.qp_passing_marks} />
-                    <DetailItem label="Final" value={paper.is_final} />
-                    <DetailItem label="PDF URL" value={paper.qp_pdf} />
-                    <div className="md:col-span-2">
-                        <DetailItem label="Description" value={paper.qp_desc} />
-                    </div>
+                    <DetailItem label="Exam Question" value={questionLabel} />
+                    <DetailItem label="Student Code" value={record.student_exam_code} />
+                    <DetailItem label="Marks Scored" value={record.marks_scored} />
+                    <DetailItem label="Seat No" value={record.seat_no} />
                 </CardContent>
             </Card>
         </div>

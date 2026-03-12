@@ -21,11 +21,11 @@ export const API_CONTS = {
         DETAILS: "/exam-questions/:id/"
     },
     EXAM_QUESTION_MARKS_ANONYMOUS: {
-        LIST: "/exam-question-marks-anonymous",
-        CREATE: "/exam-question-marks-anonymous",
-        UPDATE: "/exam-question-marks-anonymous/:id",
-        DELETE: "/exam-question-marks-anonymous/:id",
-        DETAILS: "/exam-question-marks-anonymous/:id"
+        LIST: "/exam-question-marks-anonymous/",
+        CREATE: "/exam-question-marks-anonymous/",
+        UPDATE: "/exam-question-marks-anonymous/:id/",
+        DELETE: "/exam-question-marks-anonymous/:id/",
+        DETAILS: "/exam-question-marks-anonymous/:id/"
     },
     EXAM_TOTAL_MARKS_ANONYMOUS: {
         LIST: "/exam-total-marks-anonymous/",

@@ -40,6 +40,8 @@ const navigation = [
     { name: "Exam Sessions", href: "/exam-sessions", icon: Layers },
     { name: "Exam Questions", href: "/exam-questions", icon: HelpCircle },
     { name: "Student Exam Question Marks", href: "/student-exam-question-marks", icon: Database },
+    { name: "Exam Question Marks Anonymous", href: "/exam_question_marks_anonymous", icon: Database },
+    { name: "Exam Total Marks Anonymous", href: "/exam_total_marks_anonymous", icon: Database },
     { name: "Exam Question Outcomes", href: "/exam-question-outcomes", icon: Database },
     { name: "Student Exam Question Outcome Scores", href: "/student-exam-question-outcome-scores", icon: Database },
     { name: "Exam Outcomes", href: "/exam-outcomes", icon: Database },

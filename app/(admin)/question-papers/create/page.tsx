@@ -17,6 +17,7 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/ui/card";
+import { QuestionPaperService } from "@/services/QuestionPaperService";
 import type { QuestionPaper } from "@/services/QuestionPaperService";
 
 const defaultFormData: Omit<QuestionPaper, "id"> = {
@@ -43,11 +44,12 @@ export default function CreateQuestionPaperPage() {
         e.preventDefault();
         setIsSubmitting(true);
         try {
-            await new Promise((resolve) => setTimeout(resolve, 500));
-            console.log("Submitted data:", formData);
+            // call API
+            await QuestionPaperService.create(formData);
             toast.success("Question paper created successfully!");
             router.push("/question-papers");
-        } catch {
+        } catch (error) {
+            console.error("Error creating question paper", error);
             toast.error("Failed to create question paper.");
         } finally {
             setIsSubmitting(false);

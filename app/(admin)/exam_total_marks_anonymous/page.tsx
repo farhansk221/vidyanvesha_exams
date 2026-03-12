@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Plus, Search, Loader2, Eye, Pencil, Trash } from "lucide-react";
 import { toast } from "sonner";
@@ -14,70 +14,78 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
-import { QuestionPaperService, type QuestionPaper } from "@/services/QuestionPaperService";
+import {
+    ExamTotalMarksAnonymousService,
+    type ExamTotalMarksAnonymous,
+} from "@/services/ExamTotalMarksAnonymousService";
+import { ExamService, type Exam } from "@/services/ExamServices";
 
-export default function QuestionPapersPage() {
-    const [papers, setPapers] = useState<QuestionPaper[]>([]);
+export default function TotalMarksAnonymousPage() {
+    const [items, setItems] = useState<ExamTotalMarksAnonymous[]>([]);
+    const [examsMap, setExamsMap] = useState<Record<number, Exam>>({});
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    useEffect(() => {
-        const fetchPapers = async () => {
-            try {
-                setIsLoading(true);
-                const data = await QuestionPaperService.getAll();
-                // API may return paginated response
-                const list = Array.isArray(data) ? data : (data?.results || []);
-                setPapers(list);
-            } catch (err) {
-                console.error("Failed to fetch question papers", err);
-                setError("Failed to load");
-                setPapers([]);
-            } finally {
-                setIsLoading(false);
-            }
-        };
-        fetchPapers();
-    }, []);
-
-    const refreshList = async () => {
+    const fetchData = async () => {
         try {
-            const data = await QuestionPaperService.getAll();
-            const list = Array.isArray(data) ? data : (data?.results || []);
-            setPapers(list);
+            setIsLoading(true);
+            const [resp, examsResp] = await Promise.all([
+                ExamTotalMarksAnonymousService.getAll(),
+                ExamService.getAll().catch(() => ({ results: [] })),
+            ]);
+            setItems(resp.results || []);
+            const map: Record<number, Exam> = {};
+            (examsResp.results || []).forEach((e) => {
+                if (e.id !== undefined) map[e.id] = e;
+            });
+            setExamsMap(map);
         } catch (err) {
-            console.error(err);
+            console.error("Failed to load total marks anonymous", err);
+            setError("Failed to load");
+        } finally {
+            setIsLoading(false);
         }
     };
 
+    useEffect(() => {
+        fetchData();
+    }, []);
+
     const handleDelete = async (id: number) => {
-        if (!window.confirm("Are you sure you want to delete this question paper?")) return;
+        if (!window.confirm("Are you sure you want to delete this record?")) return;
         try {
-            await QuestionPaperService.delete(id);
-            toast.success("Question paper deleted successfully");
-            setPapers((prev) => prev.filter((p) => p.id !== id));
+            await ExamTotalMarksAnonymousService.delete(id);
+            toast.success("Record deleted successfully");
+            fetchData();
         } catch (err) {
             console.error(err);
-            toast.error("Failed to delete question paper");
+            toast.error("Failed to delete record");
         }
+    };
+
+    const renderExamLabel = (examId: number | null) => {
+        if (!examId) return "N/A";
+        const ex = examsMap[examId];
+        if (!ex) return `Exam ${examId}`;
+        return `Exam ${ex.id} (session ${ex.exam_session || 'N/A'})`;
     };
 
     return (
         <div className="p-6 space-y-6">
             <div>
-                <h1 className="text-2xl font-bold tracking-tight">Question Papers</h1>
-                <p className="text-muted-foreground">Manage question papers and their details</p>
+                <h1 className="text-2xl font-bold tracking-tight">Anonymous Total Marks</h1>
+                <p className="text-muted-foreground">Manage anonymous total marks records</p>
             </div>
 
             <div className="flex items-center justify-between gap-4">
                 <div className="relative max-w-sm w-full">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input placeholder="Search question papers..." className="pl-9" />
+                    <Input placeholder="Search records..." className="pl-9" />
                 </div>
-                <Link href="/question-papers/create">
+                <Link href="/exam_total_marks_anonymous/create">
                     <Button>
                         <Plus className="mr-2 h-4 w-4" />
-                        Create Question Paper
+                        Create Record
                     </Button>
                 </Link>
             </div>
@@ -87,10 +95,10 @@ export default function QuestionPapersPage() {
                     <TableHeader>
                         <TableRow>
                             <TableHead>ID</TableHead>
-                            <TableHead>NAME</TableHead>
-                            <TableHead>CODE</TableHead>
-                            <TableHead>TOTAL MARKS</TableHead>
-                            <TableHead>FINAL</TableHead>
+                            <TableHead>EXAM</TableHead>
+                            <TableHead>STUDENT CODE</TableHead>
+                            <TableHead>MARKS</TableHead>
+                            <TableHead>SEAT NO</TableHead>
                             <TableHead>ACTIONS</TableHead>
                         </TableRow>
                     </TableHeader>
@@ -107,27 +115,27 @@ export default function QuestionPapersPage() {
                                     {error}
                                 </TableCell>
                             </TableRow>
-                        ) : papers.length === 0 ? (
+                        ) : items.length === 0 ? (
                             <TableRow>
                                 <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
-                                    No question papers found. Click &quot;Create Question Paper&quot; to get started.
+                                    No records found. Click "Create Record" to get started.
                                 </TableCell>
                             </TableRow>
                         ) : (
-                            papers.map((qp) => (
-                                <TableRow key={qp.id}>
-                                    <TableCell>{qp.id}</TableCell>
-                                    <TableCell>{qp.qp_name}</TableCell>
-                                    <TableCell>{qp.qp_code}</TableCell>
-                                    <TableCell>{qp.qp_total_marks}</TableCell>
-                                    <TableCell>{qp.is_final ? "Yes" : "No"}</TableCell>
+                            items.map((rec) => (
+                                <TableRow key={rec.id}>
+                                    <TableCell>{rec.id}</TableCell>
+                                    <TableCell>{renderExamLabel(rec.exam)}</TableCell>
+                                    <TableCell>{rec.student_exam_code}</TableCell>
+                                    <TableCell>{rec.marks_scored}</TableCell>
+                                    <TableCell>{rec.seat_no}</TableCell>
                                     <TableCell>
-                                        <Link href={`/question-papers/${qp.id}`}>
+                                        <Link href={`/exam_total_marks_anonymous/${rec.id}`}> 
                                             <Button variant="outline" size="sm">
                                                 <Eye className="h-4 w-4" />
                                             </Button>
                                         </Link>
-                                        <Link href={`/question-papers/${qp.id}/edit`}>
+                                        <Link href={`/exam_total_marks_anonymous/${rec.id}/edit`}> 
                                             <Button variant="outline" size="sm">
                                                 <Pencil className="h-4 w-4" />
                                             </Button>
@@ -136,7 +144,7 @@ export default function QuestionPapersPage() {
                                             variant="outline"
                                             size="sm"
                                             className="text-red-500 hover:text-red-700"
-                                            onClick={() => qp.id && handleDelete(qp.id)}
+                                            onClick={() => rec.id && handleDelete(rec.id)}
                                         >
                                             <Trash className="h-4 w-4" />
                                         </Button>
