@@ -3,10 +3,13 @@ import { firebaseService } from "@/lib/firebaseService";
 
 export interface ExamOutcome {
     id?: number;
-    exam_question_outcome: number | null;
-    student: number | null;
-    score: number | null;
-    out_of: number | null;
+    exam: number | null;
+    course_outcome: number | null;
+    weightage: number | null;
+    percentage_of_students_above_cutoff: number | null;
+    target_percentage: number | null;
+    gap_percentage: number | null;
+    attainment_level_achieved: number | null;
 }
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
@@ -24,7 +27,8 @@ export const ExamOutcomeService = {
         const headers = await getAuthHeaders();
         const response = await fetch(`${BASE_URL}${API_CONTS.EXAM_OUTCOMES.LIST}`, { headers });
         if (!response.ok) throw new Error("Failed to fetch exam outcomes");
-        return response.json();
+        const data = await response.json();
+        return Array.isArray(data) ? data : data.results || [];
     },
 
     async getById(id: number): Promise<ExamOutcome> {

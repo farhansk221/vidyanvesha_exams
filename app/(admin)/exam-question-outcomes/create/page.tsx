@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,7 +16,15 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/ui/card";
-import type { ExamQuestionOutcome } from "@/services/ExamQuestionOutcome";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
+import { ExamQuestionOutcomeService, type ExamQuestionOutcome } from "@/services/ExamQuestionOutcome";
+import { ExamService, type Exam } from "@/services/ExamServices";
 
 const defaultFormData: Omit<ExamQuestionOutcome, "id"> = {
     exam_question: null,
@@ -27,7 +35,26 @@ const defaultFormData: Omit<ExamQuestionOutcome, "id"> = {
 export default function CreateExamQuestionOutcomePage() {
     const router = useRouter();
     const [formData, setFormData] = useState<Omit<ExamQuestionOutcome, "id">>(defaultFormData);
+    const [exams, setExams] = useState<Exam[]>([]);
+    const [isLoadingData, setIsLoadingData] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+
+    useEffect(() => {
+        const fetchDropdownData = async () => {
+            try {
+                setIsLoadingData(true);
+                const examsData = await ExamService.getAll();
+                setExams(examsData.results || []);
+            } catch (err) {
+                console.error(err);
+                setError("Failed to load the Data");
+            } finally {
+                setIsLoadingData(false);
+            }
+        };
+        fetchDropdownData();
+    }, []);
 
     const handleInputChange = (field: keyof typeof formData, value: number | null) => {
         setFormData((prev) => ({ ...prev, [field]: value }));
@@ -37,8 +64,7 @@ export default function CreateExamQuestionOutcomePage() {
         e.preventDefault();
         setIsSubmitting(true);
         try {
-            await new Promise((resolve) => setTimeout(resolve, 500));
-            console.log("Submitted data:", formData);
+            await ExamQuestionOutcomeService.create(formData);
             toast.success("Exam question outcome created successfully!");
             router.push("/exam-question-outcomes");
         } catch {
@@ -47,6 +73,22 @@ export default function CreateExamQuestionOutcomePage() {
             setIsSubmitting(false);
         }
     };
+
+    if (isLoadingData) {
+        return (
+            <div className="flex h-[400px] items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="p-6 text-center text-red-500 font-medium">
+                {error}
+            </div>
+        );
+    }
 
     return (
         <div className="p-6 max-w-4xl mx-auto space-y-6">
@@ -70,15 +112,23 @@ export default function CreateExamQuestionOutcomePage() {
                     </CardHeader>
                     <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-2">
-                            <Label htmlFor="exam_question">Exam Question ID *</Label>
-                            <Input
-                                id="exam_question"
-                                type="number"
-                                placeholder="e.g. 1"
-                                value={formData.exam_question ?? ""}
-                                onChange={(e) => handleInputChange("exam_question", e.target.value ? Number(e.target.value) : null)}
+                            <Label htmlFor="exam_question">Exam Question (Exam) *</Label>
+                            <Select
+                                value={formData.exam_question?.toString()}
+                                onValueChange={(val) => handleInputChange("exam_question", Number(val))}
                                 required
-                            />
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select an Exam" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {exams.map((exam) => (
+                                        <SelectItem key={exam.id} value={exam.id?.toString() || ""}>
+                                            {`Exam ${exam.id}`}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="outcome">Outcome ID *</Label>

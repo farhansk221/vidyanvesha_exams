@@ -1,6 +1,13 @@
 import { API_CONTS } from "@/lib/api";
 import { firebaseService } from "@/lib/firebaseService";
 
+export interface PaginatedResponse<T> {
+    count: number;
+    next: string | null;
+    previous: string | null;
+    results: T[];
+}
+
 export interface ExamQuestionOutcome {
     id?: number;
     exam_question: number | null;
@@ -19,7 +26,7 @@ const getAuthHeaders = async (): Promise<HeadersInit> => {
 };
 
 export const ExamQuestionOutcomeService = {
-    async getAll(): Promise<ExamQuestionOutcome[]> {
+    async getAll(): Promise<PaginatedResponse<ExamQuestionOutcome>> {
         const headers = await getAuthHeaders();
         const response = await fetch(`${BASE_URL}${API_CONTS.EXAM_QUESTION_OUTCOMES.LIST}`, { headers });
         if (!response.ok) throw new Error("Failed to fetch exam question outcomes");

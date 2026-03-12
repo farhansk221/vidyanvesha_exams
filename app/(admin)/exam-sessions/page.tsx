@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Plus, Search, Loader2, Eye, Edit, Pencil, Trash } from "lucide-react";
+import { Plus, Search, Loader2, Eye, Edit, Pencil, Trash, BookOpen, HelpCircle } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -146,6 +146,16 @@ export default function ExamSessionsPage() {
                                         <Link href={`/exam-sessions/${session.id}/edit`}>
                                             <Button variant="outline" size="sm">
                                                 <Pencil className="h-4 w-4" />
+                                            </Button>
+                                        </Link>
+                                        <Link href={`/exams?sessionId=${session.id}`}>
+                                            <Button variant="outline" size="sm" title="View Exams">
+                                                <BookOpen className="h-4 w-4" />
+                                            </Button>
+                                        </Link>
+                                        <Link href={`/exam-questions?sessionId=${session.id}`}>
+                                            <Button variant="outline" size="sm" title="View Questions">
+                                                <HelpCircle className="h-4 w-4" />
                                             </Button>
                                         </Link>
                                         <Button variant="outline" size="sm"

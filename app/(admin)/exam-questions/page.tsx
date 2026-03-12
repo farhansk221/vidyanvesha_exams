@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Plus, Search, Loader2, Trash, Pencil, View, Eye } from "lucide-react";
+import { Plus, Search, Loader2, Trash, Pencil, View, Eye, X, Filter } from "lucide-react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,6 +29,16 @@ export default function ExamQuestionsPage() {
 
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const searchParams = useSearchParams();
+    const router = useRouter();
+    const examIdFilter = searchParams.get("examId");
+    const sessionIdFilter = searchParams.get("sessionId");
+
+    const filteredExamQuestions = examQuestions.filter(eq => {
+        const matchExam = examIdFilter ? eq.exam === Number(examIdFilter) : true;
+        const matchSession = sessionIdFilter ? (examsMap[eq.exam as number]?.exam_session === Number(sessionIdFilter)) : true;
+        return matchExam && matchSession;
+    });
 
     const fetchData = async () => {
         try {
@@ -106,6 +117,26 @@ export default function ExamQuestionsPage() {
                 </Link>
             </div>
 
+            {(examIdFilter || sessionIdFilter) && (
+                <div className="flex items-center gap-2 bg-blue-50 p-3 rounded-md border border-blue-200 text-blue-700">
+                    <Filter className="h-4 w-4" />
+                    <span className="text-sm font-medium">
+                        Showing questions for: 
+                        {sessionIdFilter && ` Session: ${sessionsMap[Number(sessionIdFilter)] || `ID ${sessionIdFilter}`}`}
+                        {examIdFilter && ` | Exam: ${examIdFilter}`}
+                    </span>
+                    <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => router.push('/exam-questions')}
+                        className="ml-auto h-7 px-2 hover:bg-blue-100 text-blue-700"
+                    >
+                        <X className="mr-1 h-3 w-3" />
+                        Clear Filters
+                    </Button>
+                </div>
+            )}
+
             <div className="rounded-md border">
                 <Table>
                     <TableHeader>
@@ -139,7 +170,7 @@ export default function ExamQuestionsPage() {
                                 </TableCell>
                             </TableRow>
                         ) : (
-                            examQuestions.map((eq) => {
+                            filteredExamQuestions.map((eq) => {
                                 const renderExamValue = (examId: number | null) => {
                                     if (!examId) return "N/A";
                                     const exam = examsMap[examId];

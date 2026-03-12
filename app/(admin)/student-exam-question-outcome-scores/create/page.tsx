@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,7 +16,21 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/ui/card";
-import type { StudentExamQuestionOutcomeScore } from "@/services/StudentExamQuestionOutcomeScoreService";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
+import {
+    StudentExamQuestionOutcomeScoreService,
+    StudentExamQuestionOutcomeScore,
+} from "@/services/StudentExamQuestionOutcomeScoreService";
+import {
+    ExamQuestionOutcomeService,
+    ExamQuestionOutcome,
+} from "@/services/ExamQuestionOutcome";
 
 const defaultFormData: Omit<StudentExamQuestionOutcomeScore, "id"> = {
     exam_question_outcome: null,
@@ -28,7 +42,25 @@ const defaultFormData: Omit<StudentExamQuestionOutcomeScore, "id"> = {
 export default function CreateStudentExamQuestionOutcomeScorePage() {
     const router = useRouter();
     const [formData, setFormData] = useState<Omit<StudentExamQuestionOutcomeScore, "id">>(defaultFormData);
+    const [outcomes, setOutcomes] = useState<ExamQuestionOutcome[]>([]);
+    const [isLoadingOutcomes, setIsLoadingOutcomes] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
+
+    useEffect(() => {
+        const fetchOutcomes = async () => {
+            try {
+                const response = await ExamQuestionOutcomeService.getAll();
+                // Check if response is paginated or direct array
+                setOutcomes(Array.isArray(response) ? response : response.results || []);
+            } catch (error) {
+                console.error("Failed to fetch outcomes:", error);
+                toast.error("Failed to load exam question outcomes.");
+            } finally {
+                setIsLoadingOutcomes(false);
+            }
+        };
+        fetchOutcomes();
+    }, []);
 
     const handleInputChange = (field: keyof typeof formData, value: number | null) => {
         setFormData((prev) => ({ ...prev, [field]: value }));
@@ -36,14 +68,20 @@ export default function CreateStudentExamQuestionOutcomeScorePage() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        
+        if (!formData.exam_question_outcome) {
+            toast.error("Please select an exam question outcome");
+            return;
+        }
+
         setIsSubmitting(true);
         try {
-            await new Promise((resolve) => setTimeout(resolve, 500));
-            console.log("Submitted data:", formData);
+            await StudentExamQuestionOutcomeScoreService.create(formData);
             toast.success("Outcome score created successfully!");
             router.push("/student-exam-question-outcome-scores");
-        } catch {
-            toast.error("Failed to create outcome score.");
+        } catch (error) {
+            console.error("Submission error:", error);
+            toast.error("Failed to create outcome score. Please try again.");
         } finally {
             setIsSubmitting(false);
         }
@@ -71,15 +109,27 @@ export default function CreateStudentExamQuestionOutcomeScorePage() {
                     </CardHeader>
                     <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-2">
-                            <Label htmlFor="exam_question_outcome">Exam Question Outcome ID *</Label>
-                            <Input
-                                id="exam_question_outcome"
-                                type="number"
-                                placeholder="e.g. 1"
-                                value={formData.exam_question_outcome ?? ""}
-                                onChange={(e) => handleInputChange("exam_question_outcome", e.target.value ? Number(e.target.value) : null)}
-                                required
-                            />
+                            <Label htmlFor="exam_question_outcome">Exam Question Outcome *</Label>
+                            <Select
+                                value={formData.exam_question_outcome?.toString() || ""}
+                                onValueChange={(value) => handleInputChange("exam_question_outcome", Number(value))}
+                                disabled={isLoadingOutcomes}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder={isLoadingOutcomes ? "Loading outcomes..." : "Select outcome"} />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {outcomes.length === 0 ? (
+                                        <SelectItem value="none" disabled>No outcomes available</SelectItem>
+                                    ) : (
+                                        outcomes.map((outcome) => (
+                                            <SelectItem key={outcome.id} value={outcome.id?.toString() || ""}>
+                                                ID: {outcome.id} (Weightage: {outcome.weightage})
+                                            </SelectItem>
+                                        ))
+                                    )}
+                                </SelectContent>
+                            </Select>
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="student">Student ID *</Label>
@@ -119,10 +169,15 @@ export default function CreateStudentExamQuestionOutcomeScorePage() {
                     </CardContent>
                     <CardFooter className="flex justify-end gap-4 border-t pt-6">
                         <Link href="/student-exam-question-outcome-scores">
-                            <Button type="button" variant="outline">Cancel</Button>
+                            <Button type="button" variant="outline" disabled={isSubmitting}>Cancel</Button>
                         </Link>
-                        <Button type="submit" disabled={isSubmitting}>
-                            {isSubmitting ? "Creating..." : "Create Outcome Score"}
+                        <Button type="submit" disabled={isSubmitting || isLoadingOutcomes}>
+                            {isSubmitting ? (
+                                <>
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    Creating...
+                                </>
+                            ) : "Create Outcome Score"}
                         </Button>
                     </CardFooter>
                 </Card>

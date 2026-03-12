@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Plus, Search, Eye, Loader2, Trash, Pencil } from "lucide-react";
+import { Plus, Search, Eye, Loader2, Trash, Pencil, X, Filter, HelpCircle } from "lucide-react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,6 +25,13 @@ export default function ExamsPage() {
     const [coursesMap, setCoursesMap] = useState<Record<number, string>>({});
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const searchParams = useSearchParams();
+    const router = useRouter();
+    const sessionIdFilter = searchParams.get("sessionId");
+
+    const filteredExams = sessionIdFilter 
+        ? exams.filter(exam => exam.exam_session === Number(sessionIdFilter))
+        : exams;
 
     const fetchData = async () => {
         try {
@@ -99,6 +107,24 @@ export default function ExamsPage() {
                 </Link>
             </div>
 
+            {sessionIdFilter && (
+                <div className="flex items-center gap-2 bg-blue-50 p-3 rounded-md border border-blue-200 text-blue-700">
+                    <Filter className="h-4 w-4" />
+                    <span className="text-sm font-medium">
+                        Showing exams for session: {sessionsMap[Number(sessionIdFilter)] || `ID ${sessionIdFilter}`}
+                    </span>
+                    <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => router.push('/exams')}
+                        className="ml-auto h-7 px-2 hover:bg-blue-100 text-blue-700"
+                    >
+                        <X className="mr-1 h-3 w-3" />
+                        Clear Filter
+                    </Button>
+                </div>
+            )}
+
             <div className="rounded-md border">
                 <Table>
                     <TableHeader>
@@ -137,7 +163,7 @@ export default function ExamsPage() {
                                 </TableCell>
                             </TableRow>
                         ) : (
-                            exams.map((exam) => (
+                            filteredExams.map((exam) => (
                                 <TableRow key={exam.id}>
                                     <TableCell>{exam.id}</TableCell>
                                     <TableCell>{exam.exam_session ? sessionsMap[exam.exam_session] || `Session ${exam.exam_session}` : "N/A"}</TableCell>
@@ -160,6 +186,11 @@ export default function ExamsPage() {
                                             <Link href={`/exams/${exam.id}/edit`}>
                                                 <Button variant="outline" size="sm">
                                                     <Pencil className="h-4 w-4" />
+                                                </Button>
+                                            </Link>
+                                            <Link href={`/exam-questions?examId=${exam.id}&sessionId=${exam.exam_session}`}>
+                                                <Button variant="outline" size="sm" title="View Questions">
+                                                    <HelpCircle className="h-4 w-4" />
                                                 </Button>
                                             </Link>
                                             <Button variant="outline" size="sm"

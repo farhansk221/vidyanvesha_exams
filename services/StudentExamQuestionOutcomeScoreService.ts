@@ -24,7 +24,8 @@ export const StudentExamQuestionOutcomeScoreService = {
         const headers = await getAuthHeaders();
         const response = await fetch(`${BASE_URL}${API_CONTS.STUDENT_EXAM_QUESTION_OUTCOMES_SCORE.LIST}`, { headers });
         if (!response.ok) throw new Error("Failed to fetch student exam question outcome scores");
-        return response.json();
+        const data = await response.json();
+        return Array.isArray(data) ? data : data.results || [];
     },
 
     async getById(id: number): Promise<StudentExamQuestionOutcomeScore> {
