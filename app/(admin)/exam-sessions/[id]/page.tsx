@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Edit, Loader2, Trash } from "lucide-react";
+import { ArrowLeft, Edit, Loader2, Trash, FileText, Users } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -113,6 +113,18 @@ export default function ViewExamSessionPage() {
                         <Trash className="mr-2 h-4 w-4" />
                         Delete
                     </Button>
+                    <Link href={`/exam-session-student?sessionId=${id}`}>
+                        <Button variant="outline">
+                            <Users className="mr-2 h-4 w-4" />
+                            View Students
+                        </Button>
+                    </Link>
+                    <Link href={`/exam-question-paper?sessionId=${id}`}>
+                        <Button variant="outline">
+                            <FileText className="mr-2 h-4 w-4" />
+                            View Question Papers
+                        </Button>
+                    </Link>
                     <Link href={`/exam-sessions/${id}/edit`}>
                         <Button>
                             <Edit className="mr-2 h-4 w-4" />

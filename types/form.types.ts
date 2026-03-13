@@ -210,7 +210,7 @@ export interface QuestionOption {
 export interface QuestionSnapshot extends TimeStampedAudit {
   id: number;
   form_question: number;
-  form_question_detail: {
+  form_question_detail?: {
     id: number;
     form_id: number;
     form_title: string;
@@ -222,13 +222,8 @@ export interface QuestionSnapshot extends TimeStampedAudit {
     consider_for_analytics?: boolean;
   };
   question_text: string;
-  question_type: QuestionType | string;
-  options_snapshot: {
-    options: Array<{
-      id: string;
-      text: string;
-    }>;
-  } | null;
+  question_type: QuestionType;
+  options_snapshot: QuestionOption[] | null;
   explanation?: string;
   hint?: string;
   institute_id: number | null;
@@ -497,13 +492,8 @@ export interface UpdateQuestionAnalyticPayload extends Partial<CreateQuestionAna
 export interface CreateQuestionSnapshotPayload {
   form_question: number;
   question_text: string;
-  question_type: QuestionType | string;
-  options_snapshot: {
-    options: Array<{
-      id: string;
-      text: string;
-    }>;
-  };
+  question_type: QuestionType;
+  options_snapshot: QuestionOption[];
 }
 
 export interface UpdateQuestionSnapshotPayload extends Partial<CreateQuestionSnapshotPayload> {

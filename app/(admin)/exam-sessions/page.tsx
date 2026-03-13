@@ -2,7 +2,19 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Plus, Search, Loader2, Eye, Edit, Pencil, Trash, BookOpen, HelpCircle } from "lucide-react";
+import { 
+    Plus, 
+    Search, 
+    Loader2, 
+    Eye, 
+    Pencil, 
+    Trash, 
+    BookOpen, 
+    HelpCircle, 
+    FileText, 
+    Users,
+    MoreVertical
+} from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,6 +26,14 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { ExamSessionService, type ExamSession } from "@/services/ExamSessionServices";
 
 export default function ExamSessionsPage() {
@@ -22,48 +42,40 @@ export default function ExamSessionsPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    useEffect(() => {
-        const fetchAllData = async () => {
-            try {
-                setIsLoading(true);
-                const [examSessionsResponse, academicSessionsData] = await Promise.all([
-                    ExamSessionService.getAll(),
-                    ExamSessionService.getAcademicSessions().catch(() => [])
-                ]);
-                
-                setSessions(examSessionsResponse.results || []);
-                
-                const map: Record<number, string> = {};
-                academicSessionsData.forEach((session: any) => {
-                    map[session.id] = session.session_name || session.academic_session_name || session.name || `Session ${session.id}`;
-                });
-                setAcademicSessionsMap(map);
-                
-            } catch (err) {
-                console.error("Failed to fetch data:", err);
-                setError("Failed to load exam sessions");
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
-        fetchAllData();
-    }, []);
-
-    const fetchSessions = async () => {
+    const fetchData = async () => {
         try {
-            const response = await ExamSessionService.getAll();
-            setSessions(response.results || []);
+            setIsLoading(true);
+            const [examSessionsResponse, academicSessionsData] = await Promise.all([
+                ExamSessionService.getAll(),
+                ExamSessionService.getAcademicSessions().catch(() => [])
+            ]);
+
+            setSessions(examSessionsResponse.results || []);
+
+            const map: Record<number, string> = {};
+            academicSessionsData.forEach((session: any) => {
+                map[session.id] = session.session_name || session.academic_session_name || session.name || `Session ${session.id}`;
+            });
+            setAcademicSessionsMap(map);
+
         } catch (err) {
-            console.error("Failed to fetch exam sessions:", err);
+            console.error("Failed to fetch data:", err);
+            setError("Failed to load exam sessions");
+        } finally {
+            setIsLoading(false);
         }
     };
+
+    useEffect(() => {
+        fetchData();
+    }, []);
+
     const handleDelete = async (id: number) => {
         if (!window.confirm("Are you sure you want to delete this exam session?")) return;
         try {
             await ExamSessionService.delete(id);
             toast.success("Exam session deleted successfully");
-            fetchSessions();
+            fetchData();
         } catch (error) {
             console.error(error);
             toast.error("Failed to delete exam session");
@@ -101,7 +113,7 @@ export default function ExamSessionsPage() {
                             <TableHead>START DATE</TableHead>
                             <TableHead>END DATE</TableHead>
                             <TableHead>REGULAR</TableHead>
-                            <TableHead>ACTIONS</TableHead>
+                            <TableHead className="text-right">ACTIONS</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -127,43 +139,80 @@ export default function ExamSessionsPage() {
                             sessions.map((session) => (
                                 <TableRow key={session.id}>
                                     <TableCell>{session.id}</TableCell>
-                                    <TableCell>{session.exam_session_name}</TableCell>
+                                    <TableCell className="font-medium">{session.exam_session_name}</TableCell>
                                     <TableCell>{session.exam_session_held_in}</TableCell>
                                     <TableCell>
-                                        {session.academic_session_id 
-                                            ? academicSessionsMap[session.academic_session_id] || session.academic_session_id 
+                                        {session.academic_session_id
+                                            ? academicSessionsMap[session.academic_session_id] || session.academic_session_id
                                             : "N/A"}
                                     </TableCell>
                                     <TableCell>{session.exam_session_start_date}</TableCell>
                                     <TableCell>{session.exam_session_end_date}</TableCell>
                                     <TableCell>{session.exam_session_regular ? "Yes" : "No"}</TableCell>
-                                    <TableCell>
-                                        <Link href={`/exam-sessions/${session.id}`}>
-                                            <Button variant="outline" size="sm">
-                                                <Eye className="h-4 w-4" />
-                                            </Button>
-                                        </Link>
-                                        <Link href={`/exam-sessions/${session.id}/edit`}>
-                                            <Button variant="outline" size="sm">
-                                                <Pencil className="h-4 w-4" />
-                                            </Button>
-                                        </Link>
-                                        <Link href={`/exams?sessionId=${session.id}`}>
-                                            <Button variant="outline" size="sm" title="View Exams">
-                                                <BookOpen className="h-4 w-4" />
-                                            </Button>
-                                        </Link>
-                                        <Link href={`/exam-questions?sessionId=${session.id}`}>
-                                            <Button variant="outline" size="sm" title="View Questions">
-                                                <HelpCircle className="h-4 w-4" />
-                                            </Button>
-                                        </Link>
-                                        <Button variant="outline" size="sm"
-                                            onClick={() => session.id && handleDelete(session.id)}
-                                            className="text-red-500 hover:text-red-700"
-                                        >
-                                            <Trash className="h-4 w-4" />
-                                        </Button>
+                                    <TableCell className="text-right">
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button variant="ghost" className="h-8 w-8 p-0">
+                                                    <span className="sr-only">Open menu</span>
+                                                    <MoreVertical className="h-4 w-4" />
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="end" className="w-[200px]">
+                                                <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                                <DropdownMenuSeparator />
+                                                <Link href={`/exam-sessions/${session.id}`}>
+                                                    <DropdownMenuItem className="cursor-pointer">
+                                                        <Eye className="mr-2 h-4 w-4" />
+                                                        <span>Preview</span>
+                                                    </DropdownMenuItem>
+                                                </Link>
+                                                <Link href={`/exam-sessions/${session.id}/edit`}>
+                                                    <DropdownMenuItem className="cursor-pointer">
+                                                        <Pencil className="mr-2 h-4 w-4" />
+                                                        <span>Edit</span>
+                                                    </DropdownMenuItem>
+                                                </Link>
+                                                <DropdownMenuSeparator />
+                                                <Link href={`/exams?sessionId=${session.id}`}>
+                                                    <DropdownMenuItem className="cursor-pointer">
+                                                        <BookOpen className="mr-2 h-4 w-4" />
+                                                        <span>View Exams</span>
+                                                    </DropdownMenuItem>
+                                                </Link>
+                                                <Link href={`/exam-questions?sessionId=${session.id}`}>
+                                                    <DropdownMenuItem className="cursor-pointer">
+                                                        <HelpCircle className="mr-2 h-4 w-4" />
+                                                        <span>View Questions</span>
+                                                    </DropdownMenuItem>
+                                                </Link>
+                                                <Link href={`/exam-question-paper?sessionId=${session.id}`}>
+                                                    <DropdownMenuItem className="cursor-pointer">
+                                                        <FileText className="mr-2 h-4 w-4" />
+                                                        <span>View Question Papers</span>
+                                                    </DropdownMenuItem>
+                                                </Link>
+                                                <Link href={`/exam-question-outcomes?sessionId=${session.id}`}>
+                                                    <DropdownMenuItem className="cursor-pointer">
+                                                        <BookOpen className="mr-2 h-4 w-4" />
+                                                        <span>CO Mapping</span>
+                                                    </DropdownMenuItem>
+                                                </Link>
+                                                <Link href={`/exam-session-student?sessionId=${session.id}`}>
+                                                    <DropdownMenuItem className="cursor-pointer">
+                                                        <Users className="mr-2 h-4 w-4" />
+                                                        <span>View Students</span>
+                                                    </DropdownMenuItem>
+                                                </Link>
+                                                <DropdownMenuSeparator />
+                                                <DropdownMenuItem 
+                                                    className="cursor-pointer text-red-600 focus:text-red-600"
+                                                    onClick={() => session.id && handleDelete(session.id)}
+                                                >
+                                                    <Trash className="mr-2 h-4 w-4" />
+                                                    <span>Delete</span>
+                                                </DropdownMenuItem>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
                                     </TableCell>
                                 </TableRow>
                             ))
@@ -173,4 +222,4 @@ export default function ExamSessionsPage() {
             </div>
         </div>
     );
-}
+}

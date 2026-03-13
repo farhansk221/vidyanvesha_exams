@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import Link from "next/link";
 import { Plus, Search, Loader2, Trash, Pencil, View, Eye, X, Filter } from "lucide-react";
 import { useSearchParams, useRouter } from "next/navigation";
@@ -19,7 +19,7 @@ import { ExamQuestionService, type ExamQuestion, type Question } from "@/service
 import { ExamService, type Exam } from "@/services/ExamServices";
 import { ExamSessionService } from "@/services/ExamSessionServices";
 
-export default function ExamQuestionsPage() {
+function ExamQuestionsContent() {
     const [examQuestions, setExamQuestions] = useState<ExamQuestion[]>([]);
     const [questionsMap, setQuestionsMap] = useState<Record<number, Question>>({});
     const [examsMap, setExamsMap] = useState<Record<number, Exam>>({});
@@ -238,5 +238,17 @@ export default function ExamQuestionsPage() {
                 </Table>
             </div>
         </div>
+    );
+}
+
+export default function ExamQuestionsPage() {
+    return (
+        <Suspense fallback={
+            <div className="p-6 flex items-center justify-center min-h-[400px]">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+        }>
+            <ExamQuestionsContent />
+        </Suspense>
     );
 }

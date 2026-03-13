@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import Link from "next/link";
-import { Plus, Search, Eye, Loader2, Trash, Pencil, X, Filter, HelpCircle } from "lucide-react";
+import { Plus, Search, Eye, Loader2, Trash, Pencil, X, Filter, HelpCircle, FileText, Users } from "lucide-react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -18,7 +18,7 @@ import {
 import { ExamService, type Exam } from "@/services/ExamServices";
 import { ExamSessionService } from "@/services/ExamSessionServices";
 
-export default function ExamsPage() {
+function ExamsList() {
     const [exams, setExams] = useState<Exam[]>([]);
     const [sessionsMap, setSessionsMap] = useState<Record<number, string>>({});
     const [programsMap, setProgramsMap] = useState<Record<number, string>>({});
@@ -87,6 +87,7 @@ export default function ExamsPage() {
             toast.error("Failed to delete exam");
         }
     };
+
     return (
         <div className="p-6 space-y-6">
             <div>
@@ -188,9 +189,14 @@ export default function ExamsPage() {
                                                     <Pencil className="h-4 w-4" />
                                                 </Button>
                                             </Link>
-                                            <Link href={`/exam-questions?examId=${exam.id}&sessionId=${exam.exam_session}`}>
-                                                <Button variant="outline" size="sm" title="View Questions">
-                                                    <HelpCircle className="h-4 w-4" />
+                                            <Link href={`/exam-question-paper?examId=${exam.id}&sessionId=${exam.exam_session}`}>
+                                                <Button variant="outline" size="sm" title="View Question Papers">
+                                                    <FileText className="h-4 w-4" />
+                                                </Button>
+                                            </Link>
+                                            <Link href={`/exam-session-student?examId=${exam.id}&sessionId=${exam.exam_session}`}>
+                                                <Button variant="outline" size="sm" title="View Students">
+                                                    <Users className="h-4 w-4" />
                                                 </Button>
                                             </Link>
                                             <Button variant="outline" size="sm"
@@ -208,5 +214,17 @@ export default function ExamsPage() {
                 </Table>
             </div>
         </div>
+    );
+}
+
+export default function ExamsPage() {
+    return (
+        <Suspense fallback={
+            <div className="p-6 flex items-center justify-center min-h-[400px]">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+        }>
+            <ExamsList />
+        </Suspense>
     );
 }

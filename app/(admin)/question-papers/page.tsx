@@ -25,10 +25,8 @@ export default function QuestionPapersPage() {
         const fetchPapers = async () => {
             try {
                 setIsLoading(true);
-                const data = await QuestionPaperService.getAll();
-                // API may return paginated response
-                const list = Array.isArray(data) ? data : (data?.results || []);
-                setPapers(list);
+                const response = await QuestionPaperService.getAll();
+                setPapers(response.results || []);
             } catch (err) {
                 console.error("Failed to fetch question papers", err);
                 setError("Failed to load");
@@ -42,9 +40,8 @@ export default function QuestionPapersPage() {
 
     const refreshList = async () => {
         try {
-            const data = await QuestionPaperService.getAll();
-            const list = Array.isArray(data) ? data : (data?.results || []);
-            setPapers(list);
+            const response = await QuestionPaperService.getAll();
+            setPapers(response.results || []);
         } catch (err) {
             console.error(err);
         }

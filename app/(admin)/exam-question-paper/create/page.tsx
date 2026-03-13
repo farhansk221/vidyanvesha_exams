@@ -1,12 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -17,7 +16,16 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/ui/card";
-import type { ExamQuestionPaper } from "@/services/ExamQuestionpaperService";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
+import { ExamQuestionPaperService, type ExamQuestionPaper } from "@/services/ExamQuestionpaperService";
+import { ExamService, type Exam } from "@/services/ExamServices";
+import { QuestionPaperService, type QuestionPaper } from "@/services/QuestionPaperService";
 
 const defaultFormData: Omit<ExamQuestionPaper, "id"> = {
     exam: null,
@@ -29,6 +37,30 @@ export default function CreateExamQuestionPaperPage() {
     const router = useRouter();
     const [formData, setFormData] = useState<Omit<ExamQuestionPaper, "id">>(defaultFormData);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    
+    const [exams, setExams] = useState<Exam[]>([]);
+    const [questionPapers, setQuestionPapers] = useState<QuestionPaper[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchDropdownData = async () => {
+            try {
+                setIsLoading(true);
+                const [examsData, qpData] = await Promise.all([
+                    ExamService.getAll().catch(() => ({ results: [] })),
+                    QuestionPaperService.getAll().catch(() => [])
+                ]);
+                setExams(examsData.results || []);
+                setQuestionPapers(Array.isArray(qpData) ? qpData : (qpData as any).results || []);
+            } catch (error) {
+                console.error("Failed to fetch dropdown data:", error);
+                toast.error("Failed to load exams or question papers");
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchDropdownData();
+    }, []);
 
     const handleInputChange = (field: keyof typeof formData, value: number | boolean | null) => {
         setFormData((prev) => ({ ...prev, [field]: value }));
@@ -36,13 +68,17 @@ export default function CreateExamQuestionPaperPage() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (!formData.exam || !formData.question_paper) {
+            toast.error("Please select both an exam and a question paper");
+            return;
+        }
         setIsSubmitting(true);
         try {
-            await new Promise((resolve) => setTimeout(resolve, 500));
-            console.log("Submitted data:", formData);
+            await ExamQuestionPaperService.create(formData);
             toast.success("Exam question paper created successfully!");
             router.push("/exam-question-paper");
-        } catch {
+        } catch (error) {
+            console.error(error);
             toast.error("Failed to create exam question paper.");
         } finally {
             setIsSubmitting(false);
@@ -71,26 +107,42 @@ export default function CreateExamQuestionPaperPage() {
                     </CardHeader>
                     <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-2">
-                            <Label htmlFor="exam">Exam ID *</Label>
-                            <Input
-                                id="exam"
-                                type="number"
-                                placeholder="e.g. 1"
-                                value={formData.exam ?? ""}
-                                onChange={(e) => handleInputChange("exam", e.target.value ? Number(e.target.value) : null)}
-                                required
-                            />
+                            <Label htmlFor="exam">Exam *</Label>
+                            <Select
+                                value={formData.exam?.toString() || ""}
+                                onValueChange={(value) => handleInputChange("exam", Number(value))}
+                                disabled={isLoading}
+                            >
+                                <SelectTrigger id="exam">
+                                    <SelectValue placeholder={isLoading ? "Loading exams..." : "Select Exam"} />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {exams.map((exam) => (
+                                        <SelectItem key={exam.id} value={exam.id?.toString() || ""}>
+                                            {`Exam ${exam.id} (${exam.exam_date || "No date"})`}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="question_paper">Question Paper ID *</Label>
-                            <Input
-                                id="question_paper"
-                                type="number"
-                                placeholder="e.g. 1"
-                                value={formData.question_paper ?? ""}
-                                onChange={(e) => handleInputChange("question_paper", e.target.value ? Number(e.target.value) : null)}
-                                required
-                            />
+                            <Label htmlFor="question_paper">Question Paper *</Label>
+                            <Select
+                                value={formData.question_paper?.toString() || ""}
+                                onValueChange={(value) => handleInputChange("question_paper", Number(value))}
+                                disabled={isLoading}
+                            >
+                                <SelectTrigger id="question_paper">
+                                    <SelectValue placeholder={isLoading ? "Loading papers..." : "Select Question Paper"} />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {questionPapers.map((qp) => (
+                                        <SelectItem key={qp.id} value={qp.id?.toString() || ""}>
+                                            {qp.qp_name || `QP ${qp.id}`}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                         </div>
                         <div className="flex items-center justify-between rounded-lg border p-4 md:col-span-2">
                             <div className="space-y-0.5">
@@ -108,7 +160,7 @@ export default function CreateExamQuestionPaperPage() {
                         <Link href="/exam-question-paper">
                             <Button type="button" variant="outline">Cancel</Button>
                         </Link>
-                        <Button type="submit" disabled={isSubmitting}>
+                        <Button type="submit" disabled={isSubmitting || isLoading}>
                             {isSubmitting ? "Creating..." : "Create Exam Question Paper"}
                         </Button>
                     </CardFooter>
