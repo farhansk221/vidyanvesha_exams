@@ -2,7 +2,7 @@
 
 import { useEffect, useState, Suspense } from "react";
 import Link from "next/link";
-import { Plus, Search, Eye, Loader2, Trash, Pencil, X, Filter, HelpCircle, FileText, Users } from "lucide-react";
+import { Plus, Search, Eye, Loader2, Trash, Pencil, X, Filter, HelpCircle, FileText, Users, MoreVertical } from "lucide-react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,14 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { ExamService, type Exam } from "@/services/ExamServices";
 import { ExamSessionService } from "@/services/ExamSessionServices";
 
@@ -141,7 +149,7 @@ function ExamsList() {
                             <TableHead>Exam Duration</TableHead>
                             <TableHead>Exam Date</TableHead>
                             <TableHead>Exam Start Time</TableHead>
-                            <TableHead>ACTIONS</TableHead>
+                            <TableHead className="text-right">Actions</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -177,35 +185,52 @@ function ExamsList() {
                                     <TableCell>{exam.exam_duration || "None"}</TableCell>
                                     <TableCell>{exam.exam_date || "N/A"}</TableCell>
                                     <TableCell>{exam.exam_start_time || "N/A"}</TableCell>
-                                    <TableCell>
-                                        <div className="flex items-center gap-2">
-                                            <Link href={`/exams/${exam.id}`}>
-                                                <Button variant="outline" size="sm">
-                                                    <Eye className="h-4 w-4" />
+                                    <TableCell className="text-right">
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button variant="ghost" className="h-8 w-8 p-0">
+                                                    <span className="sr-only">Open menu</span>
+                                                    <MoreVertical className="h-4 w-4" />
                                                 </Button>
-                                            </Link>
-                                            <Link href={`/exams/${exam.id}/edit`}>
-                                                <Button variant="outline" size="sm">
-                                                    <Pencil className="h-4 w-4" />
-                                                </Button>
-                                            </Link>
-                                            <Link href={`/exam-question-paper?examId=${exam.id}&sessionId=${exam.exam_session}`}>
-                                                <Button variant="outline" size="sm" title="View Question Papers">
-                                                    <FileText className="h-4 w-4" />
-                                                </Button>
-                                            </Link>
-                                            <Link href={`/exam-session-student?examId=${exam.id}&sessionId=${exam.exam_session}`}>
-                                                <Button variant="outline" size="sm" title="View Students">
-                                                    <Users className="h-4 w-4" />
-                                                </Button>
-                                            </Link>
-                                            <Button variant="outline" size="sm"
-                                                onClick={() => exam.id && handleDelete(exam.id)}
-                                                className="text-red-500 hover:text-red-700"
-                                            >
-                                                <Trash className="h-4 w-4" />
-                                            </Button>
-                                        </div>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="end" className="w-[200px]">
+                                                <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                                <DropdownMenuSeparator />
+                                                <Link href={`/exams/${exam.id}`}>
+                                                    <DropdownMenuItem className="cursor-pointer">
+                                                        <Eye className="mr-2 h-4 w-4" />
+                                                        <span>Preview</span>
+                                                    </DropdownMenuItem>
+                                                </Link>
+                                                <Link href={`/exams/${exam.id}/edit`}>
+                                                    <DropdownMenuItem className="cursor-pointer">
+                                                        <Pencil className="mr-2 h-4 w-4" />
+                                                        <span>Edit</span>
+                                                    </DropdownMenuItem>
+                                                </Link>
+                                                <DropdownMenuSeparator />
+                                                <Link href={`/exam-question-paper?examId=${exam.id}&sessionId=${exam.exam_session}`}>
+                                                    <DropdownMenuItem className="cursor-pointer">
+                                                        <FileText className="mr-2 h-4 w-4" />
+                                                        <span>Question Papers</span>
+                                                    </DropdownMenuItem>
+                                                </Link>
+                                                <Link href={`/exam-session-student?examId=${exam.id}&sessionId=${exam.exam_session}`}>
+                                                    <DropdownMenuItem className="cursor-pointer">
+                                                        <Users className="mr-2 h-4 w-4" />
+                                                        <span>Session Students</span>
+                                                    </DropdownMenuItem>
+                                                </Link>
+                                                <DropdownMenuSeparator />
+                                                <DropdownMenuItem 
+                                                    className="cursor-pointer text-red-600 focus:text-red-600"
+                                                    onClick={() => exam.id && handleDelete(exam.id)}
+                                                >
+                                                    <Trash className="mr-2 h-4 w-4" />
+                                                    <span>Delete</span>
+                                                </DropdownMenuItem>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
                                     </TableCell>
                                 </TableRow>
                             ))

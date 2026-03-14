@@ -113,7 +113,7 @@ export default function ExamSessionsPage() {
                             <TableHead>START DATE</TableHead>
                             <TableHead>END DATE</TableHead>
                             <TableHead>REGULAR</TableHead>
-                            <TableHead className="text-right">ACTIONS</TableHead>
+                            <TableHead className="text-right">Actions</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>

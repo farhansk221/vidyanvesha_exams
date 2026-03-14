@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Plus, Search, Eye, Edit, Trash, Loader2, Pencil } from "lucide-react";
+import { Plus, Search, Eye, Edit, Trash, Loader2, Pencil, MoreVertical } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,6 +14,14 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { ExamGradeStructureService, type ExamGradeStructure } from "@/services/ExamGradeStructureService";
 
 export default function ExamGradeStructurePage() {
@@ -90,7 +98,7 @@ export default function ExamGradeStructurePage() {
                             <TableHead>MIN MARKS</TableHead>
                             <TableHead>MAX MARKS</TableHead>
                             <TableHead>PASSING</TableHead>
-                            <TableHead>ACTIONS</TableHead>
+                             <TableHead className="text-right">Actions</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -125,25 +133,39 @@ export default function ExamGradeStructurePage() {
                                     <TableCell>{structure.min_marks ?? "N/A"}</TableCell>
                                     <TableCell>{structure.max_marks ?? "N/A"}</TableCell>
                                     <TableCell>{structure.passing_grade_flag ? "Yes" : "No"}</TableCell>
-                                    <TableCell>
-                                        <div className="flex items-center gap-2">
-                                            <Link href={`/exam-grade-structure/${structure.id}`}>
-                                                <Button variant="outline" size="sm">
-                                                    <Eye className="h-4 w-4" />
+                                     <TableCell className="text-right">
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button variant="ghost" className="h-8 w-8 p-0">
+                                                    <span className="sr-only">Open menu</span>
+                                                    <MoreVertical className="h-4 w-4" />
                                                 </Button>
-                                            </Link>
-                                            <Link href={`/exam-grade-structure/${structure.id}/edit`}>
-                                                <Button variant="outline" size="sm">
-                                                    <Pencil className="h-4 w-4" />
-                                                </Button>
-                                            </Link>
-                                            <Button variant="outline" size="sm"
-                                                onClick={() => structure.id && handleDelete(structure.id)}
-                                                className="text-red-500 hover:text-red-700"
-                                            >
-                                                <Trash className="h-4 w-4" />
-                                            </Button>
-                                        </div>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="end" className="w-[200px]">
+                                                <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                                <DropdownMenuSeparator />
+                                                <Link href={`/exam-grade-structure/${structure.id}`}>
+                                                    <DropdownMenuItem className="cursor-pointer">
+                                                        <Eye className="mr-2 h-4 w-4" />
+                                                        <span>Preview</span>
+                                                    </DropdownMenuItem>
+                                                </Link>
+                                                <Link href={`/exam-grade-structure/${structure.id}/edit`}>
+                                                    <DropdownMenuItem className="cursor-pointer">
+                                                        <Pencil className="mr-2 h-4 w-4" />
+                                                        <span>Edit</span>
+                                                    </DropdownMenuItem>
+                                                </Link>
+                                                <DropdownMenuSeparator />
+                                                <DropdownMenuItem 
+                                                    className="cursor-pointer text-red-600 focus:text-red-600"
+                                                    onClick={() => structure.id && handleDelete(structure.id)}
+                                                >
+                                                    <Trash className="mr-2 h-4 w-4" />
+                                                    <span>Delete</span>
+                                                </DropdownMenuItem>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
                                     </TableCell>
                                 </TableRow>
                             ))

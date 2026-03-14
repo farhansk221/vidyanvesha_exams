@@ -43,7 +43,7 @@ export default function QuestionPaperQuestionsPage() {
                             <TableHead>QUESTION</TableHead>
                             <TableHead>MARKS</TableHead>
                             <TableHead>ORDER</TableHead>
-                            <TableHead>ACTIONS</TableHead>
+                            <TableHead className="text-right">Actions</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>

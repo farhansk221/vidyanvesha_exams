@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Plus, Search, Pencil, Trash2, Loader2, AlertCircle } from "lucide-react";
+import { Plus, Search, Pencil, Trash, Loader2, AlertCircle, MoreVertical, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -13,6 +13,14 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import { ExamOutcomeService, ExamOutcome } from "@/services/ExamOutcomeService";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -106,7 +114,7 @@ export default function ExamOutcomesPage() {
                             <TableHead>COURSE OUTCOME</TableHead>
                             <TableHead>WEIGHTAGE</TableHead>
                             <TableHead>ATTAINMENT</TableHead>
-                            <TableHead className="text-right">ACTIONS</TableHead>
+                            <TableHead className="text-right">Actions</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -133,23 +141,33 @@ export default function ExamOutcomesPage() {
                                     <TableCell>{outcome.course_outcome}</TableCell>
                                     <TableCell>{outcome.weightage}</TableCell>
                                     <TableCell>{outcome.attainment_level_achieved}</TableCell>
-                                    <TableCell className="text-right">
-                                        <div className="flex justify-end gap-2">
-                                            <Link href={`/exam-outcomes/${outcome.id}/edit`}>
-                                                <Button variant="ghost" size="icon" title="Edit">
-                                                    <Pencil className="h-4 w-4" />
+                                     <TableCell className="text-right">
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button variant="ghost" className="h-8 w-8 p-0">
+                                                    <span className="sr-only">Open menu</span>
+                                                    <MoreVertical className="h-4 w-4" />
                                                 </Button>
-                                            </Link>
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                className="text-destructive hover:text-destructive"
-                                                onClick={() => outcome.id && handleDelete(outcome.id)}
-                                                title="Delete"
-                                            >
-                                                <Trash2 className="h-4 w-4" />
-                                            </Button>
-                                        </div>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="end" className="w-[200px]">
+                                                <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                                <DropdownMenuSeparator />
+                                                <Link href={`/exam-outcomes/${outcome.id}/edit`}>
+                                                    <DropdownMenuItem className="cursor-pointer">
+                                                        <Pencil className="mr-2 h-4 w-4" />
+                                                        <span>Edit</span>
+                                                    </DropdownMenuItem>
+                                                </Link>
+                                                <DropdownMenuSeparator />
+                                                <DropdownMenuItem 
+                                                    className="cursor-pointer text-red-600 focus:text-red-600"
+                                                    onClick={() => outcome.id && handleDelete(outcome.id)}
+                                                >
+                                                    <Trash className="mr-2 h-4 w-4" />
+                                                    <span>Delete</span>
+                                                </DropdownMenuItem>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
                                     </TableCell>
                                 </TableRow>
                             ))

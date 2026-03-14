@@ -42,7 +42,7 @@ export default function StudentExamOutcomesScoresPage() {
                             <TableHead>STUDENT</TableHead>
                             <TableHead>EXAM OUTCOME</TableHead>
                             <TableHead>SCORE</TableHead>
-                            <TableHead>ACTIONS</TableHead>
+                            <TableHead className="text-right">Actions</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>

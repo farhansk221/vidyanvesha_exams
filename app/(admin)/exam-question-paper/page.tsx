@@ -2,7 +2,7 @@
 
 import { useEffect, useState, Suspense } from "react";
 import Link from "next/link";
-import { Plus, Search, Loader2, Eye, Pencil, Trash, Filter, X, FileText } from "lucide-react";
+import { Plus, Search, Loader2, Eye, Pencil, Trash, Filter, X, FileText, MoreVertical } from "lucide-react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,14 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { ExamQuestionPaperService, type ExamQuestionPaper } from "@/services/ExamQuestionpaperService";
 import { ExamService, type Exam } from "@/services/ExamServices";
 import { QuestionPaperService, type QuestionPaper } from "@/services/QuestionPaperService";
@@ -151,7 +159,7 @@ function ExamQuestionPaperContent() {
                             <TableHead>EXAM</TableHead>
                             <TableHead>QUESTION PAPER</TableHead>
                             <TableHead>SELECTED FOR EXAM</TableHead>
-                            <TableHead>ACTIONS</TableHead>
+                            <TableHead className="text-right">Actions</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -185,25 +193,39 @@ function ExamQuestionPaperContent() {
                                         {m.question_paper ? questionPapersMap[m.question_paper] || `QP ${m.question_paper}` : "N/A"}
                                     </TableCell>
                                     <TableCell>{m.paper_selected_for_exam ? "Yes" : "No"}</TableCell>
-                                    <TableCell>
-                                        <div className="flex items-center gap-2">
-                                            <Link href={`/exam-question-paper/${m.id}`}>
-                                                <Button variant="outline" size="sm">
-                                                    <Eye className="h-4 w-4" />
+                                    <TableCell className="text-right">
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button variant="ghost" className="h-8 w-8 p-0">
+                                                    <span className="sr-only">Open menu</span>
+                                                    <MoreVertical className="h-4 w-4" />
                                                 </Button>
-                                            </Link>
-                                            <Link href={`/exam-question-paper/${m.id}/edit`}>
-                                                <Button variant="outline" size="sm">
-                                                    <Pencil className="h-4 w-4" />
-                                                </Button>
-                                            </Link>
-                                            <Button variant="outline" size="sm"
-                                                onClick={() => m.id && handleDelete(m.id)}
-                                                className="text-red-500 hover:text-red-700"
-                                            >
-                                                <Trash className="h-4 w-4" />
-                                            </Button>
-                                        </div>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="end" className="w-[200px]">
+                                                <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                                <DropdownMenuSeparator />
+                                                <Link href={`/exam-question-paper/${m.id}`}>
+                                                    <DropdownMenuItem className="cursor-pointer">
+                                                        <Eye className="mr-2 h-4 w-4" />
+                                                        <span>Preview</span>
+                                                    </DropdownMenuItem>
+                                                </Link>
+                                                <Link href={`/exam-question-paper/${m.id}/edit`}>
+                                                    <DropdownMenuItem className="cursor-pointer">
+                                                        <Pencil className="mr-2 h-4 w-4" />
+                                                        <span>Edit</span>
+                                                    </DropdownMenuItem>
+                                                </Link>
+                                                <DropdownMenuSeparator />
+                                                <DropdownMenuItem 
+                                                    className="cursor-pointer text-red-600 focus:text-red-600"
+                                                    onClick={() => m.id && handleDelete(m.id)}
+                                                >
+                                                    <Trash className="mr-2 h-4 w-4" />
+                                                    <span>Delete</span>
+                                                </DropdownMenuItem>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
                                     </TableCell>
                                 </TableRow>
                             ))

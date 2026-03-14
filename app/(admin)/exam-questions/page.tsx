@@ -2,7 +2,7 @@
 
 import { useEffect, useState, Suspense } from "react";
 import Link from "next/link";
-import { Plus, Search, Loader2, Trash, Pencil, View, Eye, X, Filter } from "lucide-react";
+import { Plus, Search, Loader2, Trash, Pencil, View, Eye, X, Filter, MoreVertical } from "lucide-react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,14 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { ExamQuestionService, type ExamQuestion, type Question } from "@/services/ExamQuestionService";
 import { ExamService, type Exam } from "@/services/ExamServices";
 import { ExamSessionService } from "@/services/ExamSessionServices";
@@ -146,7 +154,7 @@ function ExamQuestionsContent() {
                             <TableHead>Question</TableHead>
                             <TableHead>Label</TableHead>
                             <TableHead>Max Marks</TableHead>
-                            <TableHead>Actions</TableHead>
+                            <TableHead className="text-right">Actions</TableHead>
 
                         </TableRow>
                     </TableHeader>
@@ -214,21 +222,39 @@ function ExamQuestionsContent() {
                                         </TableCell>
                                         <TableCell>{eq.question_label || "N/A"}</TableCell>
                                         <TableCell>{eq.max_marks || "N/A"}</TableCell>
-                                        <TableCell className="flex gap-2">
-                                            <Link href={`/exam-questions/${eq.id}/edit`}>
-                                                <Button variant="ghost" size="sm">
-                                                    <Pencil className="h-4 w-4" />
-                                                </Button>
-                                            </Link>
-                                            <Link
-                                                href={`exam-questions/${eq.id}`}>
-                                                <Eye className="h-4 w-4" />
-                                            </Link>
-                                            <Link href={`/exam-questions/${eq.id}/delete`}>
-                                                <Button variant="ghost" size="sm">
-                                                    <Trash className="h-4 w-4" />
-                                                </Button>
-                                            </Link>
+                                        <TableCell className="text-right">
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <Button variant="ghost" className="h-8 w-8 p-0">
+                                                        <span className="sr-only">Open menu</span>
+                                                        <MoreVertical className="h-4 w-4" />
+                                                    </Button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent align="end" className="w-[200px]">
+                                                    <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                                    <DropdownMenuSeparator />
+                                                    <Link href={`/exam-questions/${eq.id}`}>
+                                                        <DropdownMenuItem className="cursor-pointer">
+                                                            <Eye className="mr-2 h-4 w-4" />
+                                                            <span>Preview</span>
+                                                        </DropdownMenuItem>
+                                                    </Link>
+                                                    <Link href={`/exam-questions/${eq.id}/edit`}>
+                                                        <DropdownMenuItem className="cursor-pointer">
+                                                            <Pencil className="mr-2 h-4 w-4" />
+                                                            <span>Edit</span>
+                                                        </DropdownMenuItem>
+                                                    </Link>
+                                                    <DropdownMenuSeparator />
+                                                    <DropdownMenuItem 
+                                                        className="cursor-pointer text-red-600 focus:text-red-600"
+                                                        onClick={() => eq.id && handleDelete(eq.id)}
+                                                    >
+                                                        <Trash className="mr-2 h-4 w-4" />
+                                                        <span>Delete</span>
+                                                    </DropdownMenuItem>
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
                                         </TableCell>
                                     </TableRow>
                                 );

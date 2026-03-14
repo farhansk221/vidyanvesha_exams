@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Plus, Search, Loader2, Pencil, Trash, Eye } from "lucide-react";
+import { Plus, Search, Loader2, Pencil, Trash, Eye, MoreVertical } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,6 +14,14 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { ExamQuestionOutcomeService, type ExamQuestionOutcome } from "@/services/ExamQuestionOutcome";
 import { ExamService } from "@/services/ExamServices";
 
@@ -90,7 +98,7 @@ export default function ExamQuestionOutcomesPage() {
                             <TableHead>EXAM QUESTION</TableHead>
                             <TableHead>OUTCOME</TableHead>
                             <TableHead>WEIGHTAGE</TableHead>
-                            <TableHead>ACTIONS</TableHead>
+                             <TableHead className="text-right">Actions</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -119,18 +127,33 @@ export default function ExamQuestionOutcomesPage() {
                                     <TableCell>{outcome.exam_question ? examsMap[outcome.exam_question] || `ID ${outcome.exam_question}` : "N/A"}</TableCell>
                                     <TableCell>{outcome.outcome ?? "N/A"}</TableCell>
                                     <TableCell>{outcome.weightage ?? "N/A"}</TableCell>
-                                    <TableCell className="flex gap-2">
-                                        <Link href={`/exam-question-outcomes/${outcome.id}/edit`}>
-                                            <Button variant="outline" size="sm">
-                                                <Pencil className="h-4 w-4" />
-                                            </Button>
-                                        </Link>
-                                        <Button variant="outline" size="sm" 
-                                            onClick={() => outcome.id && handleDelete(outcome.id)}
-                                            className="text-red-500 hover:text-red-700"
-                                        >
-                                            <Trash className="h-4 w-4" />
-                                        </Button>
+                                     <TableCell className="text-right">
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button variant="ghost" className="h-8 w-8 p-0">
+                                                    <span className="sr-only">Open menu</span>
+                                                    <MoreVertical className="h-4 w-4" />
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="end" className="w-[200px]">
+                                                <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                                <DropdownMenuSeparator />
+                                                <Link href={`/exam-question-outcomes/${outcome.id}/edit`}>
+                                                    <DropdownMenuItem className="cursor-pointer">
+                                                        <Pencil className="mr-2 h-4 w-4" />
+                                                        <span>Edit</span>
+                                                    </DropdownMenuItem>
+                                                </Link>
+                                                <DropdownMenuSeparator />
+                                                <DropdownMenuItem 
+                                                    className="cursor-pointer text-red-600 focus:text-red-600"
+                                                    onClick={() => outcome.id && handleDelete(outcome.id)}
+                                                >
+                                                    <Trash className="mr-2 h-4 w-4" />
+                                                    <span>Delete</span>
+                                                </DropdownMenuItem>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
                                     </TableCell>
                                 </TableRow>
                             ))
