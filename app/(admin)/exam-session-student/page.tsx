@@ -120,7 +120,7 @@ function ExamSessionStudentContent() {
                 <Link href="/exam-session-student/create">
                     <Button>
                         <Plus className="mr-2 h-4 w-4" />
-                        Add Student
+                        Add Session Student
                     </Button>
                 </Link>
             </div>
@@ -129,13 +129,13 @@ function ExamSessionStudentContent() {
                 <div className="flex items-center gap-2 bg-blue-50 p-3 rounded-md border border-blue-200 text-blue-700">
                     <Filter className="h-4 w-4" />
                     <span className="text-sm font-medium">
-                        Showing results for: 
+                        Showing results for:
                         {examIdFilter && ` Exam ID ${examIdFilter}`}
                         {sessionIdFilter && ` Session: ${sessionsMap[Number(sessionIdFilter)] || `ID ${sessionIdFilter}`}`}
                     </span>
-                    <Button 
-                        variant="ghost" 
-                        size="sm" 
+                    <Button
+                        variant="ghost"
+                        size="sm"
                         onClick={clearFilters}
                         className="ml-auto h-7 px-2 hover:bg-blue-100 text-blue-700"
                     >

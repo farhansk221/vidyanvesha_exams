@@ -1,5 +1,5 @@
 import { API_CONTS } from "@/lib/api";
-import { firebaseService } from "@/lib/firebaseService";
+import api from "@/config/axios";
 
 export interface ExamSessionStudent {
     id?: number;
@@ -20,59 +20,31 @@ export interface ExamSessionStudent {
     condonation_marks: number;
 }
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
-
-const getAuthHeaders = async (): Promise<HeadersInit> => {
-    const token = await firebaseService.getUserAccessToken();
-    return {
-        "Content-Type": "application/json",
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    };
-};
-
 export const ExamSessionStudentService = {
     async getAll(): Promise<ExamSessionStudent[]> {
-        const headers = await getAuthHeaders();
-        const response = await fetch(`${BASE_URL}${API_CONTS.EXAM_SESSION_STUDENT.LIST}`, { headers });
-        if (!response.ok) throw new Error("Failed to fetch exam session students");
-        return response.json();
+        const response = await api.get<ExamSessionStudent[]>(API_CONTS.EXAM_SESSION_STUDENT.LIST);
+        return response.data;
     },
 
     async getById(id: number): Promise<ExamSessionStudent> {
-        const headers = await getAuthHeaders();
         const url = API_CONTS.EXAM_SESSION_STUDENT.DETAILS.replace(":id", String(id));
-        const response = await fetch(`${BASE_URL}${url}`, { headers });
-        if (!response.ok) throw new Error("Failed to fetch exam session student");
-        return response.json();
+        const response = await api.get<ExamSessionStudent>(url);
+        return response.data;
     },
 
     async create(data: Omit<ExamSessionStudent, "id">): Promise<ExamSessionStudent> {
-        const headers = await getAuthHeaders();
-        const response = await fetch(`${BASE_URL}${API_CONTS.EXAM_SESSION_STUDENT.CREATE}`, {
-            method: "POST",
-            headers,
-            body: JSON.stringify(data),
-        });
-        if (!response.ok) throw new Error("Failed to create exam session student");
-        return response.json();
+        const response = await api.post<ExamSessionStudent>(API_CONTS.EXAM_SESSION_STUDENT.CREATE, data);
+        return response.data;
     },
 
     async update(id: number, data: Omit<ExamSessionStudent, "id">): Promise<ExamSessionStudent> {
-        const headers = await getAuthHeaders();
         const url = API_CONTS.EXAM_SESSION_STUDENT.UPDATE.replace(":id", String(id));
-        const response = await fetch(`${BASE_URL}${url}`, {
-            method: "PUT",
-            headers,
-            body: JSON.stringify(data),
-        });
-        if (!response.ok) throw new Error("Failed to update exam session student");
-        return response.json();
+        const response = await api.put<ExamSessionStudent>(url, data);
+        return response.data;
     },
 
     async delete(id: number): Promise<void> {
-        const headers = await getAuthHeaders();
         const url = API_CONTS.EXAM_SESSION_STUDENT.DELETE.replace(":id", String(id));
-        const response = await fetch(`${BASE_URL}${url}`, { method: "DELETE", headers });
-        if (!response.ok) throw new Error("Failed to delete exam session student");
+        await api.delete(url);
     },
 };

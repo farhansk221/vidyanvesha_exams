@@ -1,5 +1,5 @@
 import { API_CONTS } from "@/lib/api";
-import { firebaseService } from "@/lib/firebaseService";
+import api from "@/config/axios";
 
 export interface PaginatedResponse<T> {
     count: number;
@@ -33,16 +33,6 @@ export interface ExamQuestion {
     percentage_of_students_above_cutoff: number;
 }
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
-
-const getAuthHeaders = async (): Promise<HeadersInit> => {
-    const token = await firebaseService.getUserAccessToken();
-    return {
-        "Content-Type": "application/json",
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    };
-};
-
 const sanitizeData = (data: any): any => {
     const allowedFields = [
         "exam", "question", "question_label", "question_sequence", 
@@ -58,68 +48,41 @@ const sanitizeData = (data: any): any => {
     return cleaned;
 };
 
+const CORE_BASE_URL = process.env.NEXT_PUBLIC_API_URL_CORE || "http://localhost:8001";
+
 export const ExamQuestionService = {
     async getAll(): Promise<PaginatedResponse<ExamQuestion>> {
-        const headers = await getAuthHeaders();
-        const response = await fetch(`${BASE_URL}${API_CONTS.EXAM_QUESTIONS.LIST}`, { headers });
-        if (!response.ok) throw new Error("Failed to fetch exam questions");
-        return response.json();
+        const response = await api.get<PaginatedResponse<ExamQuestion>>(API_CONTS.EXAM_QUESTIONS.LIST);
+        return response.data;
     },
 
     async getById(id: number): Promise<ExamQuestion> {
-        const headers = await getAuthHeaders();
         const url = API_CONTS.EXAM_QUESTIONS.DETAILS.replace(":id", String(id));
-        const response = await fetch(`${BASE_URL}${url}`, { headers });
-        if (!response.ok) throw new Error("Failed to fetch exam question");
-        return response.json();
+        const response = await api.get<ExamQuestion>(url);
+        return response.data;
     },
 
     async create(data: Omit<ExamQuestion, "id">): Promise<ExamQuestion> {
-        const headers = await getAuthHeaders();
         const cleanedData = sanitizeData(data);
-        const response = await fetch(`${BASE_URL}${API_CONTS.EXAM_QUESTIONS.CREATE}`, {
-            method: "POST",
-            headers,
-            body: JSON.stringify(cleanedData),
-        });
-        if (!response.ok) {
-            const errorData = await response.json().catch(() => ({}));
-            console.error("Create Exam Question Error:", errorData);
-            throw new Error(errorData.detail || "Failed to create exam question");
-        }
-        return response.json();
+        const response = await api.post<ExamQuestion>(API_CONTS.EXAM_QUESTIONS.CREATE, cleanedData);
+        return response.data;
     },
 
     async update(id: number, data: Omit<ExamQuestion, "id">): Promise<ExamQuestion> {
-        const headers = await getAuthHeaders();
         const cleanedData = sanitizeData(data);
         const url = API_CONTS.EXAM_QUESTIONS.UPDATE.replace(":id", String(id));
-        const response = await fetch(`${BASE_URL}${url}`, {
-            method: "PUT",
-            headers,
-            body: JSON.stringify(cleanedData),
-        });
-        if (!response.ok) {
-            const errorData = await response.json().catch(() => ({}));
-            console.error("Update Exam Question Error:", errorData);
-            throw new Error(errorData.detail || "Failed to update exam question");
-        }
-        return response.json();
+        const response = await api.put<ExamQuestion>(url, cleanedData);
+        return response.data;
     },
 
     async delete(id: number): Promise<void> {
-        const headers = await getAuthHeaders();
         const url = API_CONTS.EXAM_QUESTIONS.DELETE.replace(":id", String(id));
-        const response = await fetch(`${BASE_URL}${url}`, { method: "DELETE", headers });
-        if (!response.ok) throw new Error("Failed to delete exam question");
+        await api.delete(url);
     },
 
     async getQuestions(): Promise<Question[]> {
-        const headers = await getAuthHeaders();
-        const CORE_BASE_URL = process.env.NEXT_PUBLIC_API_URL_CORE || "http://localhost:8001";
-        const response = await fetch(`${CORE_BASE_URL}/questions/`, { headers });
-        if (!response.ok) throw new Error("Failed to fetch questions");
-        const data = await response.json();
+        const response = await api.get<any>(`${CORE_BASE_URL}/questions/`);
+        const data = response.data;
         return data.results ? data.results : data;
     }
 };

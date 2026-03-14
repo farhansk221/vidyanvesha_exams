@@ -1,5 +1,5 @@
 import { API_CONTS } from "@/lib/api";
-import { firebaseService } from "@/lib/firebaseService";
+import api from "@/config/axios";
 
 export interface ExamSession {
     id?: number;
@@ -52,69 +52,39 @@ export interface AcademicSession {
     [key: string]: any;
 }
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
 const CORE_BASE_URL = process.env.NEXT_PUBLIC_API_URL_CORE || "http://localhost:8001";
-
-const getAuthHeaders = async (): Promise<HeadersInit> => {
-    const token = await firebaseService.getUserAccessToken();
-    return {
-        "Content-Type": "application/json",
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    };
-};
 
 export const ExamSessionService = {
     async getAll(): Promise<PaginatedResponse<ExamSession>> {
-        const headers = await getAuthHeaders();
-        const response = await fetch(`${BASE_URL}${API_CONTS.EXAM_SESSIONS.LIST}`, { headers });
-        if (!response.ok) throw new Error("Failed to fetch exam sessions");
-        return response.json();
+        const response = await api.get<PaginatedResponse<ExamSession>>(API_CONTS.EXAM_SESSIONS.LIST);
+        return response.data;
     },
 
     async getById(id: number): Promise<ExamSession> {
-        const headers = await getAuthHeaders();
         const url = API_CONTS.EXAM_SESSIONS.DETAILS.replace(":id", String(id));
-        const response = await fetch(`${BASE_URL}${url}`, { headers });
-        if (!response.ok) throw new Error("Failed to fetch exam session");
-        return response.json();
+        const response = await api.get<ExamSession>(url);
+        return response.data;
     },
 
     async create(data: Omit<ExamSession, "id">): Promise<ExamSession> {
-        const headers = await getAuthHeaders();
-        const response = await fetch(`${BASE_URL}${API_CONTS.EXAM_SESSIONS.CREATE}`, {
-            method: "POST",
-            headers,
-            body: JSON.stringify(data),
-        });
-        if (!response.ok) throw new Error("Failed to create exam session");
-        return response.json();
+        const response = await api.post<ExamSession>(API_CONTS.EXAM_SESSIONS.CREATE, data);
+        return response.data;
     },
 
     async update(id: number, data: Omit<ExamSession, "id">): Promise<ExamSession> {
-        const headers = await getAuthHeaders();
         const url = API_CONTS.EXAM_SESSIONS.UPDATE.replace(":id", String(id));
-        const response = await fetch(`${BASE_URL}${url}`, {
-            method: "PUT",
-            headers,
-            body: JSON.stringify(data),
-        });
-        if (!response.ok) throw new Error("Failed to update exam session");
-        return response.json();
+        const response = await api.put<ExamSession>(url, data);
+        return response.data;
     },
 
     async delete(id: number): Promise<void> {
-        const headers = await getAuthHeaders();
         const url = API_CONTS.EXAM_SESSIONS.DELETE.replace(":id", String(id));
-        const response = await fetch(`${BASE_URL}${url}`, { method: "DELETE", headers });
-        if (!response.ok) throw new Error("Failed to delete exam session");
+        await api.delete(url);
     },
 
     async getAcademicSessions(): Promise<AcademicSession[]> {
-        const headers = await getAuthHeaders();
-        const response = await fetch(`${CORE_BASE_URL}/academic-sessions/`, { headers });
-        if (!response.ok) throw new Error("Failed to fetch academic sessions");
-        const data = await response.json();
-        // Handle if it's paginated (has results array) or just a plain array
+        const response = await api.get<any>(`${CORE_BASE_URL}/academic-sessions/`);
+        const data = response.data;
         return data.results ? data.results : data;
     }
 };

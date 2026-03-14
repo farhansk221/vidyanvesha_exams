@@ -1,5 +1,5 @@
 import { API_CONTS } from "@/lib/api";
-import { firebaseService } from "@/lib/firebaseService";
+import api from "@/config/axios";
 
 export interface StudentExamQuestionOutcomeScore {
     id?: number;
@@ -9,60 +9,32 @@ export interface StudentExamQuestionOutcomeScore {
     out_of: number | null;
 }
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
-
-const getAuthHeaders = async (): Promise<HeadersInit> => {
-    const token = await firebaseService.getUserAccessToken();
-    return {
-        "Content-Type": "application/json",
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    };
-};
-
 export const StudentExamQuestionOutcomeScoreService = {
     async getAll(): Promise<StudentExamQuestionOutcomeScore[]> {
-        const headers = await getAuthHeaders();
-        const response = await fetch(`${BASE_URL}${API_CONTS.STUDENT_EXAM_QUESTION_OUTCOMES_SCORE.LIST}`, { headers });
-        if (!response.ok) throw new Error("Failed to fetch student exam question outcome scores");
-        const data = await response.json();
+        const response = await api.get<any>(API_CONTS.STUDENT_EXAM_QUESTION_OUTCOMES_SCORE.LIST);
+        const data = response.data;
         return Array.isArray(data) ? data : data.results || [];
     },
 
     async getById(id: number): Promise<StudentExamQuestionOutcomeScore> {
-        const headers = await getAuthHeaders();
         const url = API_CONTS.STUDENT_EXAM_QUESTION_OUTCOMES_SCORE.DETAILS.replace(":id", String(id));
-        const response = await fetch(`${BASE_URL}${url}`, { headers });
-        if (!response.ok) throw new Error("Failed to fetch student exam question outcome score");
-        return response.json();
+        const response = await api.get<StudentExamQuestionOutcomeScore>(url);
+        return response.data;
     },
 
     async create(data: Omit<StudentExamQuestionOutcomeScore, "id">): Promise<StudentExamQuestionOutcomeScore> {
-        const headers = await getAuthHeaders();
-        const response = await fetch(`${BASE_URL}${API_CONTS.STUDENT_EXAM_QUESTION_OUTCOMES_SCORE.CREATE}`, {
-            method: "POST",
-            headers,
-            body: JSON.stringify(data),
-        });
-        if (!response.ok) throw new Error("Failed to create student exam question outcome score");
-        return response.json();
+        const response = await api.post<StudentExamQuestionOutcomeScore>(API_CONTS.STUDENT_EXAM_QUESTION_OUTCOMES_SCORE.CREATE, data);
+        return response.data;
     },
 
     async update(id: number, data: Omit<StudentExamQuestionOutcomeScore, "id">): Promise<StudentExamQuestionOutcomeScore> {
-        const headers = await getAuthHeaders();
         const url = API_CONTS.STUDENT_EXAM_QUESTION_OUTCOMES_SCORE.UPDATE.replace(":id", String(id));
-        const response = await fetch(`${BASE_URL}${url}`, {
-            method: "PUT",
-            headers,
-            body: JSON.stringify(data),
-        });
-        if (!response.ok) throw new Error("Failed to update student exam question outcome score");
-        return response.json();
+        const response = await api.put<StudentExamQuestionOutcomeScore>(url, data);
+        return response.data;
     },
 
     async delete(id: number): Promise<void> {
-        const headers = await getAuthHeaders();
         const url = API_CONTS.STUDENT_EXAM_QUESTION_OUTCOMES_SCORE.DELETE.replace(":id", String(id));
-        const response = await fetch(`${BASE_URL}${url}`, { method: "DELETE", headers });
-        if (!response.ok) throw new Error("Failed to delete student exam question outcome score");
+        await api.delete(url);
     },
 };
