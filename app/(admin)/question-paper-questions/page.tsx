@@ -43,7 +43,7 @@ export default function QuestionPaperQuestionsPage() {
                 ExamQuestionService.getAll().catch(() => [])
             ]);
 
-            setItems(qpqData || []);
+            setItems(Array.isArray(qpqData) ? qpqData : []);
 
             const pMap: Record<number, string> = {};
             (papersData || []).forEach((p: any) => {
@@ -92,12 +92,12 @@ export default function QuestionPaperQuestionsPage() {
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input placeholder="Search question paper questions..." className="pl-9" />
                 </div>
-                <Link href="/question-paper-questions/create">
-                    <Button>
+                <Button asChild>
+                    <Link href="/question-paper-questions/create">
                         <Plus className="mr-2 h-4 w-4" />
                         Create Question Mapping
-                    </Button>
-                </Link>
+                    </Link>
+                </Button>
             </div>
 
             <div className="rounded-md border">
@@ -125,7 +125,7 @@ export default function QuestionPaperQuestionsPage() {
                                     {error}
                                 </TableCell>
                             </TableRow>
-                        ) : items.length === 0 ? (
+                        ) : !Array.isArray(items) || items.length === 0 ? (
                             <TableRow>
                                 <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
                                     No mappings found. Click &quot;Create Question Mapping&quot; to get started.
@@ -150,12 +150,12 @@ export default function QuestionPaperQuestionsPage() {
                                             <DropdownMenuContent align="end" className="w-[200px]">
                                                 <DropdownMenuLabel>Actions</DropdownMenuLabel>
                                                 <DropdownMenuSeparator />
-                                                <Link href={`/question-paper-questions/${item.id}/edit`}>
-                                                    <DropdownMenuItem className="cursor-pointer">
+                                                <DropdownMenuItem className="cursor-pointer" asChild>
+                                                    <Link href={`/question-paper-questions/${item.id}/edit`}>
                                                         <Pencil className="mr-2 h-4 w-4" />
                                                         <span>Edit</span>
-                                                    </DropdownMenuItem>
-                                                </Link>
+                                                    </Link>
+                                                </DropdownMenuItem>
                                                 <DropdownMenuSeparator />
                                                 <DropdownMenuItem 
                                                     className="cursor-pointer text-red-600 focus:text-red-600"

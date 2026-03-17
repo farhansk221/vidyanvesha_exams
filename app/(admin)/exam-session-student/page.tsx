@@ -214,7 +214,7 @@ function ExamSessionStudentContent() {
                                                     </DropdownMenuItem>
                                                 </Link>
                                                 <DropdownMenuSeparator />
-                                                <DropdownMenuItem 
+                                                <DropdownMenuItem
                                                     className="cursor-pointer text-red-600 focus:text-red-600"
                                                     onClick={() => ss.id && handleDelete(ss.id)}
                                                 >

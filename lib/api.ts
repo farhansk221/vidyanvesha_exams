@@ -51,11 +51,11 @@ export const API_CONTS = {
         DETAILS: "/exam-question-outcomes/:id/"
     },
     STUDENT_EXAM_QUESTION_OUTCOMES_SCORE: {
-        LIST: "/student-exam-question-outcomes-score/",
-        CREATE: "/student-exam-question-outcomes-score/",
-        UPDATE: "/student-exam-question-outcomes-score/:id/",
-        DELETE: "/student-exam-question-outcomes-score/:id/",
-        DETAILS: "/student-exam-question-outcomes-score/:id/"
+        LIST: "/student-exam-question-outcome-scores/",
+        CREATE: "/student-exam-question-outcome-scores/",
+        UPDATE: "/student-exam-question-outcome-scores/:id/",
+        DELETE: "/student-exam-question-outcome-scores/:id/",
+        DETAILS: "/student-exam-question-outcome-scores/:id/"
     },
     EXAM_OUTCOMES: {
         LIST: "/exam-outcomes/",
@@ -65,11 +65,11 @@ export const API_CONTS = {
         DETAILS: "/exam-outcomes/:id/"
     },
     STUDENT_EXAM_OUTCOME_SCORE: {
-        LIST: "/student-exam-outcome-score/",
-        CREATE: "/student-exam-outcome-score/",
-        UPDATE: "/student-exam-outcome-score/:id/",
-        DELETE: "/student-exam-outcome-score/:id/",
-        DETAILS: "/student-exam-outcome-score/:id/"
+        LIST: "/student-exam-outcome-scores/",
+        CREATE: "/student-exam-outcome-scores/",
+        UPDATE: "/student-exam-outcome-scores/:id/",
+        DELETE: "/student-exam-outcome-scores/:id/",
+        DETAILS: "/student-exam-outcome-scores/:id/"
     },
     QUESTION_PAPERS: {
         LIST: "/question-papers/",
