@@ -64,34 +64,36 @@ export interface Exam {
     freeze_marks: boolean;
 }
 
-const CORE_BASE_URL = process.env.NEXT_PUBLIC_API_URL_CORE || "http://localhost:8001";
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8003/api";
+const CORE_BASE_URL = process.env.NEXT_PUBLIC_API_URL_CORE || "http://localhost:8001/api";
 
 export const ExamService = {
-    async getAll(): Promise<PaginatedResponse<Exam>> {
-        const response = await api.get<PaginatedResponse<Exam>>(API_CONTS.EXAMS.LIST);
-        return response.data;
+    async getAll(): Promise<Exam[]> {
+        const response = await api.get<any>(`${BASE_URL}${API_CONTS.EXAMS.LIST}`);
+        const data = response.data;
+        return Array.isArray(data) ? data : data.results || [];
     },
 
     async getById(id: number): Promise<Exam> {
         const url = API_CONTS.EXAMS.DETAILS.replace(":id", String(id));
-        const response = await api.get<Exam>(url);
+        const response = await api.get<Exam>(`${BASE_URL}${url}`);
         return response.data;
     },
 
     async create(data: Omit<Exam, "id">): Promise<Exam> {
-        const response = await api.post<Exam>(API_CONTS.EXAMS.CREATE, data);
+        const response = await api.post<Exam>(`${BASE_URL}${API_CONTS.EXAMS.CREATE}`, data);
         return response.data;
     },
 
     async update(id: number, data: Omit<Exam, "id">): Promise<Exam> {
         const url = API_CONTS.EXAMS.UPDATE.replace(":id", String(id));
-        const response = await api.put<Exam>(url, data);
+        const response = await api.put<Exam>(`${BASE_URL}${url}`, data);
         return response.data;
     },
 
     async delete(id: number): Promise<void> {
         const url = API_CONTS.EXAMS.DELETE.replace(":id", String(id));
-        await api.delete(url);
+        await api.delete(`${BASE_URL}${url}`);
     },
 
     async getPrograms(): Promise<Program[]> {

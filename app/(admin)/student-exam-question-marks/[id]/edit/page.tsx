@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/select";
 import { StudentExamQuestionMarkService, type StudentExamQuestionMark } from "@/services/StudentExamQuestionMarkService";
 import { ExamQuestionService, type ExamQuestion } from "@/services/ExamQuestionService";
+import { StudentService, type Student } from "@/services/StudentService";
 
 export default function EditStudentExamQuestionMarkPage() {
     const router = useRouter();
@@ -37,6 +38,7 @@ export default function EditStudentExamQuestionMarkPage() {
         marks_scored: null,
     });
     const [examQuestions, setExamQuestions] = useState<ExamQuestion[]>([]);
+    const [students, setStudents] = useState<Student[]>([]);
     const [isLoadingData, setIsLoadingData] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -45,9 +47,10 @@ export default function EditStudentExamQuestionMarkPage() {
         const fetchData = async () => {
             try {
                 setIsLoadingData(true);
-                const [markData, questionsData] = await Promise.all([
+                const [markData, questionsData, studentsData] = await Promise.all([
                     StudentExamQuestionMarkService.getById(Number(id)),
-                    ExamQuestionService.getAll()
+                    ExamQuestionService.getAll(),
+                    StudentService.getAll()
                 ]);
                 
                 setFormData({
@@ -55,9 +58,10 @@ export default function EditStudentExamQuestionMarkPage() {
                     student: markData.student,
                     marks_scored: markData.marks_scored,
                 });
-                setExamQuestions(questionsData.results || []);
+                setExamQuestions(questionsData || []);
+                setStudents(studentsData || []);
             } catch (err) {
-                console.error(err);
+                console.error("Failed to load data:", err);
                 setError("Failed to load the Data");
             } finally {
                 setIsLoadingData(false);
@@ -134,22 +138,30 @@ export default function EditStudentExamQuestionMarkPage() {
                                 <SelectContent>
                                     {examQuestions.map((q) => (
                                         <SelectItem key={q.id} value={q.id?.toString() || ""}>
-                                            {q.question || `Question ${q.id}`}
+                                            {q.question_label || `Question ${q.id}`}
                                         </SelectItem>
                                     ))}
                                 </SelectContent>
                             </Select>
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="student">Student ID *</Label>
-                            <Input
-                                id="student"
-                                type="number"
-                                placeholder="e.g. 10001"
-                                value={formData.student ?? ""}
-                                onChange={(e) => handleInputChange("student", e.target.value ? Number(e.target.value) : null)}
+                            <Label htmlFor="student">Student *</Label>
+                            <Select
+                                value={formData.student?.toString()}
+                                onValueChange={(val) => handleInputChange("student", Number(val))}
                                 required
-                            />
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select a Student" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {students.map((s) => (
+                                        <SelectItem key={s.id} value={s.id?.toString() || ""}>
+                                            {[s.stud_first_name, s.stud_last_name].filter(Boolean).join(" ") || `Student ${s.id}`} ({s.enrollment_no || "No Enroll"})
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                         </div>
                         <div className="space-y-2 md:col-span-2">
                             <Label htmlFor="marks_scored">Marks Scored *</Label>

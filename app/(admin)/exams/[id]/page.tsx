@@ -38,7 +38,7 @@ export default function ViewExamPage() {
                 setIsLoading(true);
                 const [examData, sessionsData, programsData, revisionsData, coursesData] = await Promise.all([
                     ExamService.getById(Number(id)),
-                    ExamSessionService.getAll().catch(() => ({ results: [] })),
+                    ExamSessionService.getAll().catch(() => []),
                     ExamService.getPrograms().catch(() => []),
                     ExamService.getProgramRevisions().catch(() => []),
                     ExamService.getCourses().catch(() => [])
@@ -47,7 +47,7 @@ export default function ViewExamPage() {
                 setExam(examData);
                 
                 if (examData.exam_session) {
-                    const matched = (sessionsData.results || []).find((s) => s.id === examData.exam_session);
+                    const matched = (sessionsData || []).find((s) => s.id === examData.exam_session);
                     if (matched) setSessionName(matched.exam_session_name || `Session ${matched.id}`);
                 }
                 

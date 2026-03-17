@@ -47,11 +47,11 @@ function ExamSessionStudentContent() {
             const [sessionStudentsData, studentsData, sessionsData, examsData] = await Promise.all([
                 ExamSessionStudentService.getAll(),
                 StudentService.getAll().catch(() => []),
-                ExamSessionService.getAll().catch(() => ({ results: [] })),
-                ExamService.getAll().catch(() => ({ results: [] }))
+                ExamSessionService.getAll().catch(() => []),
+                ExamService.getAll().catch(() => [])
             ]);
 
-            setSessionStudents(Array.isArray(sessionStudentsData) ? sessionStudentsData : (sessionStudentsData as any).results || []);
+            setSessionStudents(sessionStudentsData || []);
 
             const studMap: Record<number, string> = {};
             studentsData.forEach((s: Student) => {
@@ -60,13 +60,13 @@ function ExamSessionStudentContent() {
             setStudentsMap(studMap);
 
             const sessMap: Record<number, string> = {};
-            (sessionsData.results || []).forEach((s: any) => {
+            (sessionsData || []).forEach((s: any) => {
                 sessMap[s.id] = s.exam_session_name || `Session ${s.id}`;
             });
             setSessionsMap(sessMap);
 
             const eMap: Record<number, Exam> = {};
-            (examsData.results || []).forEach((e: Exam) => {
+            (examsData || []).forEach((e: Exam) => {
                 if (e.id) eMap[e.id] = e;
             });
             setExamsMap(eMap);

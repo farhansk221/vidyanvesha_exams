@@ -46,16 +46,15 @@ function ExamsList() {
             setIsLoading(true);
             const [examsData, sessionsData, programsData, coursesData] = await Promise.all([
                 ExamService.getAll(),
-                ExamSessionService.getAll().catch(() => ({ results: [] })),
+                ExamSessionService.getAll().catch(() => []),
                 ExamService.getPrograms().catch(() => []),
                 ExamService.getCourses().catch(() => [])
             ]);
 
-            setExams(examsData.results || []);
+            setExams(examsData || []);
 
             const sMap: Record<number, string> = {};
-            // Using results because ExamSessionService.getAll() returns PaginatedResponse
-            (sessionsData.results || []).forEach((s) => {
+            (sessionsData || []).forEach((s) => {
                 sMap[s.id as number] = s.exam_session_name || `Session ${s.id}`;
             });
             setSessionsMap(sMap);

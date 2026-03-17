@@ -16,9 +16,10 @@ export interface StudentExamQuestionMark {
 }
 
 export const StudentExamQuestionMarkService = {
-    async getAll(): Promise<PaginatedResponse<StudentExamQuestionMark>> {
-        const response = await api.get<PaginatedResponse<StudentExamQuestionMark>>(API_CONTS.STUDENT_EXAM_QUESTION_MARKS.LIST);
-        return response.data;
+    async getAll(): Promise<StudentExamQuestionMark[]> {
+        const response = await api.get<any>(API_CONTS.STUDENT_EXAM_QUESTION_MARKS.LIST);
+        const data = response.data;
+        return Array.isArray(data) ? data : data.results || [];
     },
 
     async getById(id: number): Promise<StudentExamQuestionMark> {

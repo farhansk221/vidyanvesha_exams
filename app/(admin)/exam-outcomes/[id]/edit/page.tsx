@@ -57,8 +57,8 @@ export default function EditExamOutcomePage() {
                     ExamService.getAll(),
                     CourseOutcomeService.getAll()
                 ]);
-                setExams(Array.isArray(examsRes) ? examsRes : (examsRes as any).results || []);
-                setCourseOutcomes(Array.isArray(outcomesRes) ? outcomesRes : (outcomesRes as any).results || []);
+                setExams(examsRes || []);
+                setCourseOutcomes(outcomesRes || []);
             } catch (err) {
                 console.error("Failed to fetch dropdown data:", err);
             } finally {

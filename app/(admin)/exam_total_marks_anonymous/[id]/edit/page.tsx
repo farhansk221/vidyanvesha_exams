@@ -51,10 +51,10 @@ export default function EditTotalMarksAnonymousPage() {
             try {
                 setIsLoading(true);
                 const [examsResp, rec] = await Promise.all([
-                    ExamService.getAll().catch(() => ({ results: [] })),
+                    ExamService.getAll().catch(() => []),
                     ExamTotalMarksAnonymousService.getById(Number(id)),
                 ]);
-                setExams(examsResp.results || []);
+                setExams(examsResp || []);
                 const { id: _ignored, ...rest } = rec;
                 setFormData(rest);
             } catch (err) {

@@ -48,12 +48,13 @@ const sanitizeData = (data: any): any => {
     return cleaned;
 };
 
-const CORE_BASE_URL = process.env.NEXT_PUBLIC_API_URL_CORE || "http://localhost:8001";
+const CORE_BASE_URL = process.env.NEXT_PUBLIC_API_URL_CORE || "http://localhost:8001/api";
 
 export const ExamQuestionService = {
-    async getAll(): Promise<PaginatedResponse<ExamQuestion>> {
-        const response = await api.get<PaginatedResponse<ExamQuestion>>(API_CONTS.EXAM_QUESTIONS.LIST);
-        return response.data;
+    async getAll(): Promise<ExamQuestion[]> {
+        const response = await api.get<any>(API_CONTS.EXAM_QUESTIONS.LIST);
+        const data = response.data;
+        return Array.isArray(data) ? data : data.results || [];
     },
 
     async getById(id: number): Promise<ExamQuestion> {

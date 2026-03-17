@@ -24,10 +24,12 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { StudentExamQuestionMarkService, type StudentExamQuestionMark } from "@/services/StudentExamQuestionMarkService";
 import { ExamQuestionService } from "@/services/ExamQuestionService";
+import { StudentService } from "@/services/StudentService";
 
 export default function StudentExamQuestionMarksPage() {
     const [marks, setMarks] = useState<StudentExamQuestionMark[]>([]);
     const [examQuestionsMap, setExamQuestionsMap] = useState<Record<number, string>>({});
+    const [studentsMap, setStudentsMap] = useState<Record<number, string>>({});
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -35,20 +37,28 @@ export default function StudentExamQuestionMarksPage() {
         try {
             setIsLoading(true);
             setError(null);
-            const [marksData, questionsData] = await Promise.all([
+            const [marksData, questionsData, studentsData] = await Promise.all([
                 StudentExamQuestionMarkService.getAll(),
-                ExamQuestionService.getAll().catch(() => ({ results: [] }))
+                ExamQuestionService.getAll().catch(() => []),
+                StudentService.getAll().catch(() => [])
             ]);
 
-            setMarks(marksData.results || []);
+            setMarks(marksData || []);
 
             const qMap: Record<number, string> = {};
-            (questionsData.results || []).forEach((q: any) => {
-                qMap[q.id] = q.question || `Question ${q.id}`;
+            (questionsData || []).forEach((q: any) => {
+                qMap[q.id] = q.question_label || `Question ${q.id}`;
             });
             setExamQuestionsMap(qMap);
+
+            const sMap: Record<number, string> = {};
+            (studentsData || []).forEach((s: any) => {
+                const name = [s.stud_first_name, s.stud_last_name].filter(Boolean).join(" ");
+                sMap[s.id] = name || `Student ${s.id}`;
+            });
+            setStudentsMap(sMap);
         } catch (err) {
-            console.error("Failed to fetch data:", err);
+            console.error("fetchData failed overall:", err);
             setError("Failed to load the Data");
         } finally {
             setIsLoading(false);
@@ -99,7 +109,7 @@ export default function StudentExamQuestionMarksPage() {
                             <TableHead>STUDENT</TableHead>
                             <TableHead>EXAM QUESTION</TableHead>
                             <TableHead>MARKS OBTAINED</TableHead>
-                             <TableHead className="text-right">Actions</TableHead>
+                            <TableHead className="text-right">Actions</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -125,10 +135,10 @@ export default function StudentExamQuestionMarksPage() {
                             marks.map((m) => (
                                 <TableRow key={m.id}>
                                     <TableCell>{m.id}</TableCell>
-                                    <TableCell>{m.student}</TableCell>
+                                    <TableCell>{m.student ? studentsMap[m.student] || `ID ${m.student}` : "N/A"}</TableCell>
                                     <TableCell>{m.exam_question ? examQuestionsMap[m.exam_question] || `ID ${m.exam_question}` : "N/A"}</TableCell>
                                     <TableCell>{m.marks_scored ?? "N/A"}</TableCell>
-                                     <TableCell className="text-right">
+                                    <TableCell className="text-right">
                                         <DropdownMenu>
                                             <DropdownMenuTrigger asChild>
                                                 <Button variant="ghost" className="h-8 w-8 p-0">
@@ -139,6 +149,12 @@ export default function StudentExamQuestionMarksPage() {
                                             <DropdownMenuContent align="end" className="w-[200px]">
                                                 <DropdownMenuLabel>Actions</DropdownMenuLabel>
                                                 <DropdownMenuSeparator />
+                                                <Link href={`/student-exam-question-marks/${m.id}`}>
+                                                    <DropdownMenuItem className="cursor-pointer">
+                                                        <Eye className="mr-2 h-4 w-4" />
+                                                        <span>Preview</span>
+                                                    </DropdownMenuItem>
+                                                </Link>
                                                 <Link href={`/student-exam-question-marks/${m.id}/edit`}>
                                                     <DropdownMenuItem className="cursor-pointer">
                                                         <Pencil className="mr-2 h-4 w-4" />
@@ -146,7 +162,7 @@ export default function StudentExamQuestionMarksPage() {
                                                     </DropdownMenuItem>
                                                 </Link>
                                                 <DropdownMenuSeparator />
-                                                <DropdownMenuItem 
+                                                <DropdownMenuItem
                                                     className="cursor-pointer text-red-600 focus:text-red-600"
                                                     onClick={() => m.id && handleDelete(m.id)}
                                                 >
@@ -164,4 +180,4 @@ export default function StudentExamQuestionMarksPage() {
             </div>
         </div>
     );
-}
+}

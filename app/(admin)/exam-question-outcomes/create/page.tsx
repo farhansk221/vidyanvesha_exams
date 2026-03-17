@@ -45,7 +45,7 @@ export default function CreateExamQuestionOutcomePage() {
             try {
                 setIsLoadingData(true);
                 const examsData = await ExamService.getAll();
-                setExams(examsData.results || []);
+                setExams(examsData || []);
             } catch (err) {
                 console.error(err);
                 setError("Failed to load the Data");

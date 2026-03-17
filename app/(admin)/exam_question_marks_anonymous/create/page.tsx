@@ -49,10 +49,10 @@ export default function CreateAnonymousMarksPage() {
             try {
                 setIsLoadingData(true);
                 const qdata = await ExamQuestionService.getAll();
-                setQuestions(qdata.results || []);
+                setQuestions(qdata || []);
             } catch (err) {
                 console.error(err);
-                setError("Failed to load questions");
+                setError("Failed to load the Data");
             } finally {
                 setIsLoadingData(false);
             }
@@ -81,7 +81,7 @@ export default function CreateAnonymousMarksPage() {
 
     if (isLoadingData) {
         return (
-            <div className="flex h-100 items-center justify-center">
+            <div className="flex h-[400px] items-center justify-center">
                 <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
             </div>
         );

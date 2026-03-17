@@ -45,7 +45,7 @@ export default function EditExamQuestionPaperPage() {
                 setIsLoading(true);
                 const [existingData, examsData, qpData] = await Promise.all([
                     ExamQuestionPaperService.getById(Number(id)),
-                    ExamService.getAll().catch(() => ({ results: [] })),
+                    ExamService.getAll().catch(() => []),
                     QuestionPaperService.getAll().catch(() => [])
                 ]);
                 
@@ -54,7 +54,7 @@ export default function EditExamQuestionPaperPage() {
                     question_paper: existingData.question_paper,
                     paper_selected_for_exam: existingData.paper_selected_for_exam
                 });
-                setExams(examsData.results || []);
+                setExams(examsData || []);
                 setQuestionPapers(Array.isArray(qpData) ? qpData : (qpData as any).results || []);
             } catch (error) {
                 console.error("Failed to fetch data:", error);

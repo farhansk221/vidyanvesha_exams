@@ -33,12 +33,13 @@ export default function ExamGradeStructurePage() {
     const fetchData = async () => {
         try {
             setIsLoading(true);
+            setError(null);
             const [structuresData, programsData] = await Promise.all([
                 ExamGradeStructureService.getAll(),
                 ExamGradeStructureService.getPrograms().catch(() => [])
             ]);
 
-            setStructures(structuresData);
+            setStructures(structuresData || []);
 
             const map: Record<number, string> = {};
             programsData.forEach((prog) => {
@@ -47,7 +48,7 @@ export default function ExamGradeStructurePage() {
             setProgramsMap(map);
         } catch (err) {
             console.error(err);
-            setError("Failed to load exam grade structures");
+            setError("Failed to load the Data");
         } finally {
             setIsLoading(false);
         }

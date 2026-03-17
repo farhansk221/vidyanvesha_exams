@@ -52,39 +52,58 @@ export interface AcademicSession {
     [key: string]: any;
 }
 
-const CORE_BASE_URL = process.env.NEXT_PUBLIC_API_URL_CORE || "http://localhost:8001";
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8003/api";
+const CORE_BASE_URL = process.env.NEXT_PUBLIC_API_URL_CORE || "http://localhost:8001/api";
 
 export const ExamSessionService = {
-    async getAll(): Promise<PaginatedResponse<ExamSession>> {
-        const response = await api.get<PaginatedResponse<ExamSession>>(API_CONTS.EXAM_SESSIONS.LIST);
-        return response.data;
+    async getAll(): Promise<ExamSession[]> {
+        const response = await api.get<any>(`${BASE_URL}${API_CONTS.EXAM_SESSIONS.LIST}`);
+        const data = response.data;
+        return Array.isArray(data) ? data : data.results || [];
     },
 
     async getById(id: number): Promise<ExamSession> {
         const url = API_CONTS.EXAM_SESSIONS.DETAILS.replace(":id", String(id));
-        const response = await api.get<ExamSession>(url);
+        const response = await api.get<ExamSession>(`${BASE_URL}${url}`);
         return response.data;
     },
 
     async create(data: Omit<ExamSession, "id">): Promise<ExamSession> {
-        const response = await api.post<ExamSession>(API_CONTS.EXAM_SESSIONS.CREATE, data);
+        const response = await api.post<ExamSession>(`${BASE_URL}${API_CONTS.EXAM_SESSIONS.CREATE}`, data);
         return response.data;
     },
 
     async update(id: number, data: Omit<ExamSession, "id">): Promise<ExamSession> {
         const url = API_CONTS.EXAM_SESSIONS.UPDATE.replace(":id", String(id));
-        const response = await api.put<ExamSession>(url, data);
+        const response = await api.put<ExamSession>(`${BASE_URL}${url}`, data);
         return response.data;
     },
 
     async delete(id: number): Promise<void> {
         const url = API_CONTS.EXAM_SESSIONS.DELETE.replace(":id", String(id));
-        await api.delete(url);
+        await api.delete(`${BASE_URL}${url}`);
     },
 
     async getAcademicSessions(): Promise<AcademicSession[]> {
         const response = await api.get<any>(`${CORE_BASE_URL}/academic-sessions/`);
         const data = response.data;
         return data.results ? data.results : data;
+    },
+
+    async getCombinations(sessionId: number): Promise<any> {
+        const url = API_CONTS.EXAM_SESSIONS.COMBINATIONS.replace(":id", String(sessionId));
+        const response = await api.get(url);
+        return response.data;
+    },
+
+    async syncStudents(sessionId: number, deptId: number, progId: number, semester: number, classId: number): Promise<any> {
+        const url = API_CONTS.EXAM_SESSIONS.SYNC_STUDENTS
+            .replace(":id", String(sessionId))
+            .replace(":deptId", String(deptId))
+            .replace(":progId", String(progId))
+            .replace(":semester", String(semester))
+            .replace(":classId", String(classId));
+        const response = await api.get(url);
+        return response.data;
     }
 };

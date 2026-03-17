@@ -52,15 +52,15 @@ export default function EditAnonymousMarksPage() {
             try {
                 setIsLoading(true);
                 const [qdata, rec] = await Promise.all([
-                    ExamQuestionService.getAll().catch(() => ({ results: [] })),
+                    ExamQuestionService.getAll().catch(() => []),
                     ExamQuestionMarksAnonymousService.getById(Number(id)),
                 ]);
-                setQuestions(qdata.results || []);
+                setQuestions(qdata || []);
                 const { id: _ignored, ...rest } = rec;
                 setFormData(rest);
             } catch (err) {
                 console.error(err);
-                toast.error("Failed to load record");
+                toast.error("Failed to load the Data");
             } finally {
                 setIsLoading(false);
             }

@@ -17,9 +17,10 @@ export interface ExamTotalMarksAnonymous {
 }
 
 export const ExamTotalMarksAnonymousService = {
-    async getAll(): Promise<PaginatedResponse<ExamTotalMarksAnonymous>> {
-        const response = await api.get<PaginatedResponse<ExamTotalMarksAnonymous>>(API_CONTS.EXAM_TOTAL_MARKS_ANONYMOUS.LIST);
-        return response.data;
+    async getAll(): Promise<ExamTotalMarksAnonymous[]> {
+        const response = await api.get<any>(API_CONTS.EXAM_TOTAL_MARKS_ANONYMOUS.LIST);
+        const data = response.data;
+        return Array.isArray(data) ? data : data.results || [];
     },
 
     async getById(id: number): Promise<ExamTotalMarksAnonymous> {

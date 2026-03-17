@@ -39,11 +39,11 @@ export default function TotalMarksAnonymousPage() {
             setIsLoading(true);
             const [resp, examsResp] = await Promise.all([
                 ExamTotalMarksAnonymousService.getAll(),
-                ExamService.getAll().catch(() => ({ results: [] })),
+                ExamService.getAll().catch(() => []),
             ]);
-            setItems(resp.results || []);
+            setItems(resp || []);
             const map: Record<number, Exam> = {};
-            (examsResp.results || []).forEach((e) => {
+            (examsResp || []).forEach((e) => {
                 if (e.id !== undefined) map[e.id] = e;
             });
             setExamsMap(map);

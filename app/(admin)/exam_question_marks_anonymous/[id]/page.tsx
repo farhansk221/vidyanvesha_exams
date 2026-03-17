@@ -32,11 +32,11 @@ export default function ViewAnonymousMarkPage() {
                 setIsLoading(true);
                 const [rec, qdata] = await Promise.all([
                     ExamQuestionMarksAnonymousService.getById(Number(id)),
-                    ExamQuestionService.getAll().catch(() => ({ results: [] })),
+                    ExamQuestionService.getAll().catch(() => []),
                 ]);
                 setRecord(rec);
                 const map: Record<number, ExamQuestion> = {};
-                (qdata.results || []).forEach((q) => {
+                (qdata || []).forEach((q) => {
                     if (q.id !== undefined) map[q.id] = q;
                 });
                 setQuestionMap(map);

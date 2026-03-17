@@ -24,6 +24,7 @@ export default function ViewExamGradeStructurePage() {
     const [structure, setStructure] = useState<ExamGradeStructure | null>(null);
     const [programName, setProgramName] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         if (!id) return;
@@ -31,6 +32,7 @@ export default function ViewExamGradeStructurePage() {
         const fetchData = async () => {
             try {
                 setIsLoading(true);
+                setError(null);
                 const [data, programsData] = await Promise.all([
                     ExamGradeStructureService.getById(Number(id)),
                     ExamGradeStructureService.getPrograms().catch(() => []) 
@@ -46,7 +48,7 @@ export default function ViewExamGradeStructurePage() {
                 }
             } catch (error) {
                 console.error("Failed to fetch grade structure:", error);
-                toast.error("Failed to load grade structure details");
+                setError("Failed to load the Data");
             } finally {
                 setIsLoading(false);
             }
@@ -56,9 +58,10 @@ export default function ViewExamGradeStructurePage() {
     }, [id]);
 
     const handleDelete = async () => {
+        if (!structure?.id) return;
         if (!window.confirm("Are you sure you want to delete this grade structure?")) return;
         try {
-            await ExamGradeStructureService.delete(Number(id));
+            await ExamGradeStructureService.delete(structure.id);
             toast.success("Grade structure deleted successfully");
             router.push("/exam-grade-structure");
         } catch (error) {
@@ -69,8 +72,16 @@ export default function ViewExamGradeStructurePage() {
 
     if (isLoading) {
         return (
-            <div className="flex h-screen items-center justify-center">
+            <div className="flex h-[400px] items-center justify-center">
                 <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="p-6 text-center text-red-500 font-medium h-[400px] flex items-center justify-center">
+                {error}
             </div>
         );
     }
@@ -131,20 +142,29 @@ export default function ViewExamGradeStructurePage() {
                     </CardContent>
                 </Card>
 
-                <Card>
+                <Card className="flex flex-col">
                     <CardHeader>
-                        <CardTitle>Flags & Status</CardTitle>
-                        <CardDescription>Indicators configuration</CardDescription>
+                        <CardTitle>Association & Status</CardTitle>
+                        <CardDescription>Institution details and grade flags</CardDescription>
                     </CardHeader>
-                    <CardContent className="space-y-4">
-                        <DetailItem 
-                            label="Passing Grade" 
-                            value={structure.passing_grade_flag ? "Yes" : "No"} 
-                        />
-                        <DetailItem 
-                            label="Failing Grade" 
-                            value={structure.failing_grade_flag ? "Yes" : "No"} 
-                        />
+                    <CardContent className="space-y-4 flex-grow">
+                        <div className="grid grid-cols-2 gap-4">
+                            <DetailItem label="University ID" value={structure.university_id?.toString() || "N/A"} />
+                            <DetailItem label="Institute ID" value={structure.institute_id?.toString() || "N/A"} />
+                        </div>
+                        <Separator />
+                        <div className="flex items-center justify-between py-2">
+                            <span className="text-sm font-medium text-muted-foreground">Passing Grade</span>
+                            <span className={`px-2 py-1 rounded text-xs font-semibold ${structure.passing_grade_flag ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}`}>
+                                {structure.passing_grade_flag ? "YES" : "NO"}
+                            </span>
+                        </div>
+                        <div className="flex items-center justify-between py-2">
+                            <span className="text-sm font-medium text-muted-foreground">Failing Grade</span>
+                            <span className={`px-2 py-1 rounded text-xs font-semibold ${structure.failing_grade_flag ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-700'}`}>
+                                {structure.failing_grade_flag ? "YES" : "NO"}
+                            </span>
+                        </div>
                     </CardContent>
                 </Card>
             </div>
@@ -154,10 +174,9 @@ export default function ViewExamGradeStructurePage() {
 
 function DetailItem({ label, value }: { label: string; value: React.ReactNode }) {
     return (
-        <div>
+        <div className="py-1">
             <span className="text-sm font-medium text-muted-foreground">{label}</span>
-            <p className="mt-1 text-sm">{value}</p>
-            <Separator className="mt-3" />
+            <p className="mt-1 text-base font-medium">{value}</p>
         </div>
     );
 }

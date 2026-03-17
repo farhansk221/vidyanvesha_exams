@@ -4,7 +4,9 @@ export const API_CONTS = {
         CREATE: "/exam-sessions/",
         UPDATE: "/exam-sessions/:id/",
         DELETE: "/exam-sessions/:id/",
-        DETAILS: "/exam-sessions/:id/"
+        DETAILS: "/exam-sessions/:id/",
+        COMBINATIONS: "/exam-sessions/:id/combinations/",
+        SYNC_STUDENTS: "/exam-sessions/:id/students-by-dept-prog-sem/:deptId/:progId/:semester/:classId/"
     },
     EXAMS: {
         LIST: "/exams/",

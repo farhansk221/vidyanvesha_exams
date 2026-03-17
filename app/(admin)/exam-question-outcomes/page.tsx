@@ -37,13 +37,13 @@ export default function ExamQuestionOutcomesPage() {
             setError(null);
             const [outcomesData, examsData] = await Promise.all([
                 ExamQuestionOutcomeService.getAll(),
-                ExamService.getAll().catch(() => ({ results: [] }))
+                ExamService.getAll().catch(() => [])
             ]);
 
-            setOutcomes(outcomesData.results || []);
+            setOutcomes(outcomesData || []);
 
             const eMap: Record<number, string> = {};
-            (examsData.results || []).forEach((e: any) => {
+            (examsData || []).forEach((e: any) => {
                 eMap[e.id] = e.exam_name || `Exam ${e.id}`;
             });
             setExamsMap(eMap);

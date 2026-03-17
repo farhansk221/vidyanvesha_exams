@@ -8,17 +8,17 @@ export interface Student {
     [key: string]: any;
 }
 
-const CORE_BASE_URL = process.env.NEXT_PUBLIC_API_URL_CORE || "http://localhost:8001";
+const CORE_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
 export const StudentService = {
     async getAll(): Promise<Student[]> {
-        const response = await api.get<any>(`${CORE_BASE_URL}/students/`);
+        const response = await api.get<any>(`${CORE_BASE_URL}/student-exam-question-marks/`);
         const data = response.data;
         return data.results ? data.results : data;
     },
 
     async getById(id: number): Promise<Student> {
-        const response = await api.get<Student>(`${CORE_BASE_URL}/students/${id}/`);
+        const response = await api.get<Student>(`${CORE_BASE_URL}/student-exam-question-marks/${id}/`);
         return response.data;
     }
 };

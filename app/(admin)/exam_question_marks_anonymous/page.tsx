@@ -40,17 +40,17 @@ export default function AnonymousMarksPage() {
             setIsLoading(true);
             const [marksResp, questionsResp] = await Promise.all([
                 ExamQuestionMarksAnonymousService.getAll(),
-                ExamQuestionService.getAll().catch(() => ({ results: [] })),
+                ExamQuestionService.getAll().catch(() => []),
             ]);
-            setItems(marksResp.results || []);
+            setItems(marksResp || []);
             const qMap: Record<number, ExamQuestion> = {};
-            (questionsResp.results || []).forEach((q) => {
+            (questionsResp || []).forEach((q) => {
                 if (q.id !== undefined) qMap[q.id] = q;
             });
             setQuestionsMap(qMap);
         } catch (err) {
             console.error("Failed to load anonymous marks", err);
-            setError("Failed to load");
+            setError("Failed to load the Data");
         } finally {
             setIsLoading(false);
         }

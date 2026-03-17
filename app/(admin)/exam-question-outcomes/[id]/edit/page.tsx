@@ -55,7 +55,7 @@ export default function EditExamQuestionOutcomePage() {
                     outcome: outcomeData.outcome,
                     weightage: outcomeData.weightage,
                 });
-                setExams(examsData.results || []);
+                setExams(examsData || []);
             } catch (err) {
                 console.error(err);
                 setError("Failed to load the Data");

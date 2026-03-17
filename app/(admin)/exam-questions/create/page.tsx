@@ -55,17 +55,17 @@ export default function CreateExamQuestionPage() {
             try {
                 const [qData, eData, sData, pData, cData] = await Promise.all([
                     ExamQuestionService.getQuestions().catch(() => []),
-                    ExamService.getAll().catch(() => ({ results: [] })),
-                    ExamSessionService.getAll().catch(() => ({ results: [] })),
+                    ExamService.getAll().catch(() => []),
+                    ExamSessionService.getAll().catch(() => []),
                     ExamService.getPrograms().catch(() => []),
                     ExamService.getCourses().catch(() => [])
                 ]);
 
                 setQuestions(qData);
-                setExams(eData.results || []);
+                setExams(eData || []);
 
                 const sMap: Record<number, string> = {};
-                (sData.results || []).forEach((s) => { sMap[s.id as number] = s.exam_session_name || `Session ${s.id}`; });
+                (sData || []).forEach((s) => { sMap[s.id as number] = s.exam_session_name || `Session ${s.id}`; });
                 setSessionsMap(sMap);
 
                 const pMap: Record<number, string> = {};

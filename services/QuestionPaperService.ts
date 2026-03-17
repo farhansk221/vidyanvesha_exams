@@ -21,9 +21,10 @@ export interface PaginatedResponse<T> {
 }
 
 export const QuestionPaperService = {
-    async getAll(): Promise<PaginatedResponse<QuestionPaper>> {
-        const response = await api.get<PaginatedResponse<QuestionPaper>>(API_CONTS.QUESTION_PAPERS.LIST);
-        return response.data;
+    async getAll(): Promise<QuestionPaper[]> {
+        const response = await api.get<any>(API_CONTS.QUESTION_PAPERS.LIST);
+        const data = response.data;
+        return Array.isArray(data) ? data : data.results || [];
     },
 
     async getById(id: number): Promise<QuestionPaper> {

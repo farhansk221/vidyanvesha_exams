@@ -85,14 +85,14 @@ export default function EditExamPage() {
                 setIsLoading(true);
                 const [examData, sessionsData, programsData, revisionsData, coursesData] = await Promise.all([
                     ExamService.getById(Number(id)),
-                    ExamSessionService.getAll().catch(() => ({ results: [] })),
+                    ExamSessionService.getAll().catch(() => []),
                     ExamService.getPrograms().catch(() => []),
                     ExamService.getProgramRevisions().catch(() => []),
                     ExamService.getCourses().catch(() => [])
                 ]);
                 const { id: _, ...rest } = examData;
                 setFormData(rest as Omit<Exam, "id">);
-                setSessions(sessionsData.results || []);
+                setSessions(sessionsData || []);
                 setPrograms(programsData);
                 setRevisions(revisionsData);
                 setCourses(coursesData);

@@ -1,6 +1,13 @@
 import { API_CONTS } from "@/lib/api";
 import api from "@/config/axios";
 
+export interface PaginatedResponse<T> {
+    count: number;
+    next: string | null;
+    previous: string | null;
+    results: T[];
+}
+
 export interface ExamGradeStructure {
     id?: number;
     min_marks: number | null;
@@ -11,6 +18,8 @@ export interface ExamGradeStructure {
     failing_grade_flag: boolean;
     description: string;
     program: number | null;
+    university_id?: number | null;
+    institute_id?: number | null;
 }
 
 export interface Program {
@@ -32,8 +41,9 @@ const CORE_BASE_URL = process.env.NEXT_PUBLIC_API_URL_CORE || "http://localhost:
 
 export const ExamGradeStructureService = {
     async getAll(): Promise<ExamGradeStructure[]> {
-        const response = await api.get<ExamGradeStructure[]>(API_CONTS.EXAM_GRADE_STRUCTURE.LIST);
-        return response.data;
+        const response = await api.get<any>(API_CONTS.EXAM_GRADE_STRUCTURE.LIST);
+        const data = response.data;
+        return Array.isArray(data) ? data : data.results || [];
     },
 
     async getById(id: number): Promise<ExamGradeStructure> {

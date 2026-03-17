@@ -52,8 +52,8 @@ export default function CreateExamOutcomePage() {
                     ExamService.getAll(),
                     CourseOutcomeService.getAll()
                 ]);
-                setExams(Array.isArray(examsRes) ? examsRes : (examsRes as any).results || []);
-                setCourseOutcomes(Array.isArray(outcomesRes) ? outcomesRes : (outcomesRes as any).results || []);
+                setExams(examsRes || []);
+                setCourseOutcomes(outcomesRes || []);
             } catch (error) {
                 console.error("Failed to fetch dropdown data:", error);
                 toast.error("Failed to load dependency data (Exams/Outcomes).");

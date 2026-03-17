@@ -80,12 +80,12 @@ export default function CreateExamPage() {
             try {
                 setIsLoading(true);
                 const [sessionsData, programsData, revisionsData, coursesData] = await Promise.all([
-                    ExamSessionService.getAll().catch(() => ({ results: [] })),
+                    ExamSessionService.getAll().catch(() => []),
                     ExamService.getPrograms().catch(() => []),
                     ExamService.getProgramRevisions().catch(() => []),
                     ExamService.getCourses().catch(() => [])
                 ]);
-                setSessions(sessionsData.results || []);
+                setSessions(sessionsData || []);
                 setPrograms(programsData);
                 setRevisions(revisionsData);
                 setCourses(coursesData);

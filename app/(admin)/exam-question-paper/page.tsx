@@ -46,15 +46,15 @@ function ExamQuestionPaperContent() {
             setIsLoading(true);
             const [mappingsData, examsData, qpData, sessionsData] = await Promise.all([
                 ExamQuestionPaperService.getAll(),
-                ExamService.getAll().catch(() => ({ results: [] })),
+                ExamService.getAll().catch(() => []),
                 QuestionPaperService.getAll().catch(() => []),
-                ExamSessionService.getAll().catch(() => ({ results: [] }))
+                ExamSessionService.getAll().catch(() => [])
             ]);
 
             setMappings(Array.isArray(mappingsData) ? mappingsData : (mappingsData as any).results || []);
 
             const eMap: Record<number, Exam> = {};
-            (examsData.results || []).forEach((e: Exam) => {
+            (examsData || []).forEach((e: Exam) => {
                 if (e.id) eMap[e.id] = e;
             });
             setExamsMap(eMap);
@@ -67,7 +67,7 @@ function ExamQuestionPaperContent() {
             setQuestionPapersMap(qMap);
 
             const sMap: Record<number, string> = {};
-            (sessionsData.results || []).forEach((s: any) => {
+            (sessionsData || []).forEach((s: any) => {
                 if (s.id) sMap[s.id] = s.exam_session_name || `Session ${s.id}`;
             });
             setSessionsMap(sMap);

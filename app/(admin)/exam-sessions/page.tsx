@@ -2,18 +2,19 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { 
-    Plus, 
-    Search, 
-    Loader2, 
-    Eye, 
-    Pencil, 
-    Trash, 
-    BookOpen, 
-    HelpCircle, 
-    FileText, 
+import {
+    Plus,
+    Search,
+    Loader2,
+    Eye,
+    Pencil,
+    Trash,
+    BookOpen,
+    HelpCircle,
+    FileText,
     Users,
-    MoreVertical
+    MoreVertical,
+    Layers
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -50,7 +51,7 @@ export default function ExamSessionsPage() {
                 ExamSessionService.getAcademicSessions().catch(() => [])
             ]);
 
-            setSessions(examSessionsResponse.results || []);
+            setSessions(examSessionsResponse || []);
 
             const map: Record<number, string> = {};
             academicSessionsData.forEach((session: any) => {
@@ -203,8 +204,14 @@ export default function ExamSessionsPage() {
                                                         <span>View Students</span>
                                                     </DropdownMenuItem>
                                                 </Link>
+                                                <Link href={`/exam-sessions/${session.id}/combinations/`}>
+                                                    <DropdownMenuItem className="cursor-pointer">
+                                                        <Layers className="mr-2 h-4 w-4" />
+                                                        <span>View Combinations</span>
+                                                    </DropdownMenuItem>
+                                                </Link>
                                                 <DropdownMenuSeparator />
-                                                <DropdownMenuItem 
+                                                <DropdownMenuItem
                                                     className="cursor-pointer text-red-600 focus:text-red-600"
                                                     onClick={() => session.id && handleDelete(session.id)}
                                                 >
@@ -222,4 +229,4 @@ export default function ExamSessionsPage() {
             </div>
         </div>
     );
-}
+}

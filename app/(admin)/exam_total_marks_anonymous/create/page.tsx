@@ -49,7 +49,7 @@ export default function CreateTotalMarksAnonymousPage() {
             try {
                 setIsLoadingData(true);
                 const resp = await ExamService.getAll();
-                setExams(resp.results || []);
+                setExams(resp || []);
             } catch (err) {
                 console.error(err);
                 setError("Failed to load exams");

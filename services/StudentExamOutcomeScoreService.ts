@@ -11,8 +11,9 @@ export interface StudentExamOutcomeScore {
 
 export const StudentExamOutcomeScoreService = {
     async getAll(): Promise<StudentExamOutcomeScore[]> {
-        const response = await api.get<StudentExamOutcomeScore[]>(API_CONTS.STUDENT_EXAM_OUTCOME_SCORE.LIST);
-        return response.data;
+        const response = await api.get<any>(API_CONTS.STUDENT_EXAM_OUTCOME_SCORE.LIST);
+        const data = response.data;
+        return Array.isArray(data) ? data : data.results || [];
     },
 
     async getById(id: number): Promise<StudentExamOutcomeScore> {

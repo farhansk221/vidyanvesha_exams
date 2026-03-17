@@ -54,24 +54,24 @@ function ExamQuestionsContent() {
             const [eqData, qData, examsData, sessionsData, programsData, coursesData] = await Promise.all([
                 ExamQuestionService.getAll(),
                 ExamQuestionService.getQuestions().catch(() => []),
-                ExamService.getAll().catch(() => ({ results: [] })),
-                ExamSessionService.getAll().catch(() => ({ results: [] })),
+                ExamService.getAll().catch(() => []),
+                ExamSessionService.getAll().catch(() => []),
                 ExamService.getPrograms().catch(() => []),
                 ExamService.getCourses().catch(() => [])
             ]);
 
-            setExamQuestions(eqData.results || []);
+            setExamQuestions(eqData || []);
 
             const qMap: Record<number, Question> = {};
             qData.forEach((q) => { qMap[q.id] = q; });
             setQuestionsMap(qMap);
 
             const eMap: Record<number, Exam> = {};
-            (examsData.results || []).forEach((e) => { eMap[e.id as number] = e; });
+            (examsData || []).forEach((e) => { eMap[e.id as number] = e; });
             setExamsMap(eMap);
 
             const sMap: Record<number, string> = {};
-            (sessionsData.results || []).forEach((s) => { sMap[s.id as number] = s.exam_session_name || `Session ${s.id}`; });
+            (sessionsData || []).forEach((s) => { sMap[s.id as number] = s.exam_session_name || `Session ${s.id}`; });
             setSessionsMap(sMap);
 
             const pMap: Record<number, string> = {};

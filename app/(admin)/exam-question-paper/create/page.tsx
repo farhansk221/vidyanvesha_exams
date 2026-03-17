@@ -47,10 +47,10 @@ export default function CreateExamQuestionPaperPage() {
             try {
                 setIsLoading(true);
                 const [examsData, qpData] = await Promise.all([
-                    ExamService.getAll().catch(() => ({ results: [] })),
+                    ExamService.getAll().catch(() => []),
                     QuestionPaperService.getAll().catch(() => [])
                 ]);
-                setExams(examsData.results || []);
+                setExams(examsData || []);
                 setQuestionPapers(Array.isArray(qpData) ? qpData : (qpData as any).results || []);
             } catch (error) {
                 console.error("Failed to fetch dropdown data:", error);

@@ -34,7 +34,7 @@ export default function QuestionPapersPage() {
             try {
                 setIsLoading(true);
                 const response = await QuestionPaperService.getAll();
-                setPapers(response.results || []);
+                setPapers(response || []);
             } catch (err) {
                 console.error("Failed to fetch question papers", err);
                 setError("Failed to load");
@@ -49,7 +49,7 @@ export default function QuestionPapersPage() {
     const refreshList = async () => {
         try {
             const response = await QuestionPaperService.getAll();
-            setPapers(response.results || []);
+            setPapers(response || []);
         } catch (err) {
             console.error(err);
         }
