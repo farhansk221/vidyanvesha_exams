@@ -55,7 +55,7 @@ export default function EditStudentExamQuestionOutcomeScorePage() {
         const fetchOutcomes = async () => {
             try {
                 const response = await ExamQuestionOutcomeService.getAll();
-                setOutcomes(Array.isArray(response) ? response : response.results || []);
+                setOutcomes(response || []);
             } catch (err) {
                 console.error("Failed to fetch outcomes:", err);
             } finally {

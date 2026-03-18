@@ -30,13 +30,13 @@ export default function ViewTotalMarksAnonymousPage() {
         const fetchData = async () => {
             try {
                 setIsLoading(true);
-                const [rec, examsResp] = await Promise.all([
+                const [rec, examsRes] = await Promise.all([
                     ExamTotalMarksAnonymousService.getById(Number(id)),
-                    ExamService.getAll().catch(() => ({ results: [] })),
+                    ExamService.getAll().catch(() => []),
                 ]);
                 setRecord(rec);
                 const map: Record<number, Exam> = {};
-                (examsResp.results || []).forEach((e) => {
+                (examsRes || []).forEach((e) => {
                     if (e.id !== undefined) map[e.id] = e;
                 });
                 setExamsMap(map);

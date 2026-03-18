@@ -42,7 +42,7 @@ export default function CombinationsPage() {
             setError(null);
             const data = await ExamSessionService.getCombinations(sessionId);
             // Handle both array response and paginated results
-            const results = Array.isArray(data) ? data : (data.results || []);
+            const results = data || [];
             setCombinations(results);
         } catch (err) {
             console.error("Failed to fetch combinations:", err);

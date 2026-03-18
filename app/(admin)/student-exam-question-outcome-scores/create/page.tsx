@@ -50,8 +50,7 @@ export default function CreateStudentExamQuestionOutcomeScorePage() {
         const fetchOutcomes = async () => {
             try {
                 const response = await ExamQuestionOutcomeService.getAll();
-                // Check if response is paginated or direct array
-                setOutcomes(Array.isArray(response) ? response : response.results || []);
+                setOutcomes(response || []);
             } catch (error) {
                 console.error("Failed to fetch outcomes:", error);
                 toast.error("Failed to load exam question outcomes.");

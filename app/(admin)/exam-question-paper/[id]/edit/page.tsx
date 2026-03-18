@@ -55,7 +55,7 @@ export default function EditExamQuestionPaperPage() {
                     paper_selected_for_exam: existingData.paper_selected_for_exam
                 });
                 setExams(examsData || []);
-                setQuestionPapers(Array.isArray(qpData) ? qpData : (qpData as any).results || []);
+                setQuestionPapers(qpData || []);
             } catch (error) {
                 console.error("Failed to fetch data:", error);
                 toast.error("Failed to load data");

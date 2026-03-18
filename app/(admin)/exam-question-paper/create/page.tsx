@@ -51,7 +51,7 @@ export default function CreateExamQuestionPaperPage() {
                     QuestionPaperService.getAll().catch(() => [])
                 ]);
                 setExams(examsData || []);
-                setQuestionPapers(Array.isArray(qpData) ? qpData : (qpData as any).results || []);
+                setQuestionPapers(qpData || []);
             } catch (error) {
                 console.error("Failed to fetch dropdown data:", error);
                 toast.error("Failed to load exams or question papers");

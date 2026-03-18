@@ -51,7 +51,7 @@ function ExamQuestionPaperContent() {
                 ExamSessionService.getAll().catch(() => [])
             ]);
 
-            setMappings(Array.isArray(mappingsData) ? mappingsData : (mappingsData as any).results || []);
+            setMappings(mappingsData || []);
 
             const eMap: Record<number, Exam> = {};
             (examsData || []).forEach((e: Exam) => {
@@ -60,7 +60,7 @@ function ExamQuestionPaperContent() {
             setExamsMap(eMap);
 
             const qMap: Record<number, string> = {};
-            const qpList = Array.isArray(qpData) ? qpData : (qpData as any).results || [];
+            const qpList = qpData || [];
             qpList.forEach((q: QuestionPaper) => {
                 if (q.id) qMap[q.id] = q.qp_name || `QP ${q.id}`;
             });
