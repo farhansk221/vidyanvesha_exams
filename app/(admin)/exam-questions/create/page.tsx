@@ -98,11 +98,29 @@ export default function CreateExamQuestionPage() {
         setIsSubmitting(true);
         try {
             await ExamQuestionService.create(formData);
-            console.log(formData)
             toast.success("Exam question created successfully!");
             router.push("/exam-questions");
-        } catch {
-            toast.error("Failed to create exam question.");
+        } catch (error: any) {
+            console.error("Error creating exam question:", error);
+            if (error.response?.data) {
+                const errorData = error.response.data;
+                if (errorData.non_field_errors && Array.isArray(errorData.non_field_errors)) {
+                    errorData.non_field_errors.forEach((msg: string) => toast.error(msg));
+                } else if (typeof errorData === 'object') {
+                    Object.keys(errorData).forEach(key => {
+                        const messages = errorData[key];
+                        if (Array.isArray(messages)) {
+                            messages.forEach((msg: string) => toast.error(`${key}: ${msg}`));
+                        } else {
+                            toast.error(`${key}: ${messages}`);
+                        }
+                    });
+                } else {
+                    toast.error("Failed to create exam question.");
+                }
+            } else {
+                toast.error("Failed to create exam question.");
+            }
         } finally {
             setIsSubmitting(false);
         }

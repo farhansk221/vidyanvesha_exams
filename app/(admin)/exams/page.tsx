@@ -37,7 +37,7 @@ function ExamsList() {
     const router = useRouter();
     const sessionIdFilter = searchParams.get("sessionId");
 
-    const filteredExams = sessionIdFilter 
+    const filteredExams = sessionIdFilter
         ? exams.filter(exam => exam.exam_session === Number(sessionIdFilter))
         : exams;
 
@@ -52,6 +52,7 @@ function ExamsList() {
             ]);
 
             setExams(examsData || []);
+            console.log(examsData);
 
             const sMap: Record<number, string> = {};
             (sessionsData || []).forEach((s) => {
@@ -121,9 +122,9 @@ function ExamsList() {
                     <span className="text-sm font-medium">
                         Showing exams for session: {sessionsMap[Number(sessionIdFilter)] || `ID ${sessionIdFilter}`}
                     </span>
-                    <Button 
-                        variant="ghost" 
-                        size="sm" 
+                    <Button
+                        variant="ghost"
+                        size="sm"
                         onClick={() => router.push('/exams')}
                         className="ml-auto h-7 px-2 hover:bg-blue-100 text-blue-700"
                     >
@@ -141,7 +142,6 @@ function ExamsList() {
                             <TableHead>Exam Session</TableHead>
                             <TableHead>Class</TableHead>
                             <TableHead>Course</TableHead>
-                            <TableHead>Assessment Type</TableHead>
                             <TableHead>Exam Category</TableHead>
                             <TableHead>Total Marks</TableHead>
                             <TableHead>Passing Marks</TableHead>
@@ -177,7 +177,6 @@ function ExamsList() {
                                     <TableCell>{exam.exam_session ? sessionsMap[exam.exam_session] || `Session ${exam.exam_session}` : "N/A"}</TableCell>
                                     <TableCell>{exam.stud_class || "N/A"}</TableCell>
                                     <TableCell>{exam.course ? coursesMap[exam.course] || `Course ${exam.course}` : "N/A"}</TableCell>
-                                    <TableCell>{exam.direct_or_indirect || "N/A"}</TableCell>
                                     <TableCell>{exam.exam_category || "N/A"}</TableCell>
                                     <TableCell>{exam.total_marks || "N/A"}</TableCell>
                                     <TableCell>{exam.passing_marks || "N/A"}</TableCell>
@@ -221,7 +220,7 @@ function ExamsList() {
                                                     </DropdownMenuItem>
                                                 </Link>
                                                 <DropdownMenuSeparator />
-                                                <DropdownMenuItem 
+                                                <DropdownMenuItem
                                                     className="cursor-pointer text-red-600 focus:text-red-600"
                                                     onClick={() => exam.id && handleDelete(exam.id)}
                                                 >

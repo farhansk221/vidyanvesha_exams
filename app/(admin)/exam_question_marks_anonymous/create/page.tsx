@@ -50,6 +50,7 @@ export default function CreateAnonymousMarksPage() {
                 setIsLoadingData(true);
                 const qdata = await ExamQuestionService.getAll();
                 setQuestions(qdata || []);
+                console.log(qdata)
             } catch (err) {
                 console.error(err);
                 setError("Failed to load the Data");
@@ -129,7 +130,7 @@ export default function CreateAnonymousMarksPage() {
                                 <SelectContent>
                                     {questions.map((q) => (
                                         <SelectItem key={q.id} value={q.id?.toString() || ""}>
-                                            {q.question_label || `Q${q.id}`}
+                                            Exam {q.exam} Questions {q.question} {q.question_label || `Q${q.id}`}
                                         </SelectItem>
                                     ))}
                                 </SelectContent>

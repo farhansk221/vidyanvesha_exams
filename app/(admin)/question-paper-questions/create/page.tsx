@@ -78,9 +78,27 @@ export default function CreateQuestionPaperQuestionPage() {
             await QuestionPaperQuestionService.create(formData);
             toast.success("Question mapping created successfully!");
             router.push("/question-paper-questions");
-        } catch (error) {
-            console.error(error);
-            toast.error("Failed to create question mapping.");
+        } catch (error: any) {
+            console.error("Error creating question mapping:", error);
+            if (error.response?.data) {
+                const errorData = error.response.data;
+                if (errorData.non_field_errors && Array.isArray(errorData.non_field_errors)) {
+                    errorData.non_field_errors.forEach((msg: string) => toast.error(msg));
+                } else if (typeof errorData === 'object') {
+                    Object.keys(errorData).forEach(key => {
+                        const messages = errorData[key];
+                        if (Array.isArray(messages)) {
+                            messages.forEach((msg: string) => toast.error(`${key}: ${msg}`));
+                        } else {
+                            toast.error(`${key}: ${messages}`);
+                        }
+                    });
+                } else {
+                    toast.error("Failed to create question mapping.");
+                }
+            } else {
+                toast.error("Failed to create question mapping.");
+            }
         } finally {
             setIsSubmitting(false);
         }

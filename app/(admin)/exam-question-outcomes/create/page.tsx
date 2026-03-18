@@ -67,8 +67,27 @@ export default function CreateExamQuestionOutcomePage() {
             await ExamQuestionOutcomeService.create(formData);
             toast.success("Exam question outcome created successfully!");
             router.push("/exam-question-outcomes");
-        } catch {
-            toast.error("Failed to create exam question outcome.");
+        } catch (error: any) {
+            console.error("Error creating exam question outcome:", error);
+            if (error.response?.data) {
+                const errorData = error.response.data;
+                if (errorData.non_field_errors && Array.isArray(errorData.non_field_errors)) {
+                    errorData.non_field_errors.forEach((msg: string) => toast.error(msg));
+                } else if (typeof errorData === 'object') {
+                    Object.keys(errorData).forEach(key => {
+                        const messages = errorData[key];
+                        if (Array.isArray(messages)) {
+                            messages.forEach((msg: string) => toast.error(`${key}: ${msg}`));
+                        } else {
+                            toast.error(`${key}: ${messages}`);
+                        }
+                    });
+                } else {
+                    toast.error("Failed to create exam question outcome.");
+                }
+            } else {
+                toast.error("Failed to create exam question outcome.");
+            }
         } finally {
             setIsSubmitting(false);
         }

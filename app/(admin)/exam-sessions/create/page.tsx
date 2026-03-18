@@ -86,9 +86,37 @@ export default function CreateExamSessionPage() {
             await ExamSessionService.create(formData);
             toast.success("Exam session created successfully!");
             router.push("/exam-sessions");
-        } catch (error) {
-            console.error(error);
-            toast.error("Failed to create exam session.");
+        } catch (error: any) {
+            console.error("Error creating exam session:", error);
+            
+            // Extract error message from backend
+            if (error.response?.data) {
+                const errorData = error.response.data;
+                
+                // Handle non_field_errors
+                if (errorData.non_field_errors && Array.isArray(errorData.non_field_errors)) {
+                    errorData.non_field_errors.forEach((msg: string) => {
+                        toast.error(msg);
+                    });
+                } 
+                // Handle field-specific errors
+                else if (typeof errorData === 'object') {
+                    Object.keys(errorData).forEach(key => {
+                        const fieldErrors = errorData[key];
+                        if (Array.isArray(fieldErrors)) {
+                            fieldErrors.forEach((msg: string) => {
+                                toast.error(`${key}: ${msg}`);
+                            });
+                        } else if (typeof fieldErrors === 'string') {
+                            toast.error(`${key}: ${fieldErrors}`);
+                        }
+                    });
+                } else {
+                    toast.error("Failed to create exam session.");
+                }
+            } else {
+                toast.error("Failed to create exam session. Please check your network connection.");
+            }
         } finally {
             setIsSubmitting(false);
         }

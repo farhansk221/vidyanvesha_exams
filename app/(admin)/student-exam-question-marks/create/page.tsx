@@ -52,7 +52,7 @@ export default function CreateStudentExamQuestionMarkPage() {
                 ]);
                 setExamQuestions(questionsData || []);
                 setStudents(studentsData || []);
-
+                console.log(questionsData)
             } catch (err) {
                 console.error("Failed to load data:", err);
                 setError("Failed to load the Data");
@@ -74,8 +74,27 @@ export default function CreateStudentExamQuestionMarkPage() {
             await StudentExamQuestionMarkService.create(formData);
             toast.success("Student marks created successfully!");
             router.push("/student-exam-question-marks");
-        } catch {
-            toast.error("Failed to create student marks.");
+        } catch (error: any) {
+            console.error("Error creating student marks:", error);
+            if (error.response?.data) {
+                const errorData = error.response.data;
+                if (errorData.non_field_errors && Array.isArray(errorData.non_field_errors)) {
+                    errorData.non_field_errors.forEach((msg: string) => toast.error(msg));
+                } else if (typeof errorData === 'object') {
+                    Object.keys(errorData).forEach(key => {
+                        const messages = errorData[key];
+                        if (Array.isArray(messages)) {
+                            messages.forEach((msg: string) => toast.error(`${key}: ${msg}`));
+                        } else {
+                            toast.error(`${key}: ${messages}`);
+                        }
+                    });
+                } else {
+                    toast.error("Failed to create student marks.");
+                }
+            } else {
+                toast.error("Failed to create student marks.");
+            }
         } finally {
             setIsSubmitting(false);
         }
@@ -131,7 +150,7 @@ export default function CreateStudentExamQuestionMarkPage() {
                                 <SelectContent>
                                     {examQuestions.map((q) => (
                                         <SelectItem key={q.id} value={q.id?.toString() || ""}>
-                                            {q.question_label || `Question ${q.id}`}
+                                            {q.question_label || `Question ${q.id}`} {q.question}
                                         </SelectItem>
                                     ))}
                                 </SelectContent>

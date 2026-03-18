@@ -108,6 +108,7 @@ export default function CreateExamPage() {
         setIsSubmitting(true);
         try {
             await ExamService.create(formData);
+            console.log(formData)
             toast.success("Exam created successfully!");
             router.push("/exams");
         } catch {
