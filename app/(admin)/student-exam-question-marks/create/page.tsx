@@ -52,6 +52,7 @@ export default function CreateStudentExamQuestionMarkPage() {
                 ]);
                 setExamQuestions(questionsData || []);
                 setStudents(studentsData || []);
+
             } catch (err) {
                 console.error("Failed to load data:", err);
                 setError("Failed to load the Data");

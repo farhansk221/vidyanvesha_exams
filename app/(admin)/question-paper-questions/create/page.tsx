@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,7 +16,16 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/ui/card";
-import type { QuestionPaperQuestion } from "@/services/QuestionPaperQuestionService";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
+import { QuestionPaperQuestionService, type QuestionPaperQuestion } from "@/services/QuestionPaperQuestionService";
+import { QuestionPaperService, type QuestionPaper } from "@/services/QuestionPaperService";
+import { ExamQuestionService, type ExamQuestion } from "@/services/ExamQuestionService";
 
 const defaultFormData: Omit<QuestionPaperQuestion, "id"> = {
     question_paper: null,
@@ -30,25 +39,60 @@ export default function CreateQuestionPaperQuestionPage() {
     const router = useRouter();
     const [formData, setFormData] = useState<Omit<QuestionPaperQuestion, "id">>(defaultFormData);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isLoadingData, setIsLoadingData] = useState(true);
+    const [questionPapers, setQuestionPapers] = useState<QuestionPaper[]>([]);
+    const [examQuestions, setExamQuestions] = useState<ExamQuestion[]>([]);
 
-    const handleInputChange = (field: keyof typeof formData, value: string | number | null) => {
+    useEffect(() => {
+        const fetchInitialData = async () => {
+            try {
+                const [papers, questions] = await Promise.all([
+                    QuestionPaperService.getAll().catch(() => []),
+                    ExamQuestionService.getAll().catch(() => [])
+                ]);
+                setQuestionPapers(papers);
+                setExamQuestions(questions);
+            } catch (error) {
+                console.error("Failed to fetch initial data:", error);
+                toast.error("Failed to load dropdown options");
+            } finally {
+                setIsLoadingData(false);
+            }
+        };
+        fetchInitialData();
+    }, []);
+
+    const handleInputChange = (field: keyof typeof formData, value: any) => {
         setFormData((prev) => ({ ...prev, [field]: value }));
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (!formData.question_paper || !formData.question) {
+            toast.error("Please select both a question paper and a question");
+            return;
+        }
+
         setIsSubmitting(true);
         try {
-            await new Promise((resolve) => setTimeout(resolve, 500));
-            console.log("Submitted data:", formData);
-            toast.success("Question paper question created successfully!");
+            await QuestionPaperQuestionService.create(formData);
+            toast.success("Question mapping created successfully!");
             router.push("/question-paper-questions");
-        } catch {
-            toast.error("Failed to create question paper question.");
+        } catch (error) {
+            console.error(error);
+            toast.error("Failed to create question mapping.");
         } finally {
             setIsSubmitting(false);
         }
     };
+
+    if (isLoadingData) {
+        return (
+            <div className="flex h-screen items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+        );
+    }
 
     return (
         <div className="p-6 max-w-4xl mx-auto space-y-6">
@@ -59,7 +103,7 @@ export default function CreateQuestionPaperQuestionPage() {
                     </Button>
                 </Link>
                 <div>
-                    <h1 className="text-2xl font-bold tracking-tight">Create Question</h1>
+                    <h1 className="text-2xl font-bold tracking-tight">Create Question Mapping</h1>
                     <p className="text-muted-foreground">Add a new question to a question paper</p>
                 </div>
             </div>
@@ -67,31 +111,54 @@ export default function CreateQuestionPaperQuestionPage() {
             <form onSubmit={handleSubmit} className="space-y-6">
                 <Card>
                     <CardHeader>
-                        <CardTitle>Question Details</CardTitle>
-                        <CardDescription>Link a question to a question paper with its sequence and marks</CardDescription>
+                        <CardTitle>Mapping Details</CardTitle>
+                        <CardDescription>Link a question from the question bank to a specific question paper</CardDescription>
                     </CardHeader>
                     <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-2">
-                            <Label htmlFor="question_paper">Question Paper ID *</Label>
-                            <Input
-                                id="question_paper"
-                                type="number"
-                                placeholder="e.g. 1"
-                                value={formData.question_paper ?? ""}
-                                onChange={(e) => handleInputChange("question_paper", e.target.value ? Number(e.target.value) : null)}
+                            <Label htmlFor="question_paper">Question Paper *</Label>
+                            <Select
+                                value={formData.question_paper?.toString() || ""}
+                                onValueChange={(value) => handleInputChange("question_paper", Number(value))}
                                 required
-                            />
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select Question Paper" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {questionPapers.map((paper) => (
+                                        <SelectItem key={paper.id} value={paper.id!.toString()}>
+                                            {paper.qp_name} ({paper.qp_code})
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="question">Question ID *</Label>
-                            <Input
-                                id="question"
-                                type="number"
-                                placeholder="e.g. 9001"
-                                value={formData.question ?? ""}
-                                onChange={(e) => handleInputChange("question", e.target.value ? Number(e.target.value) : null)}
+                            <Label htmlFor="question">Exam Question *</Label>
+                            <Select
+                                value={formData.question?.toString() || ""}
+                                onValueChange={(value) => {
+                                    const selectedQ = examQuestions.find(q => q.id === Number(value));
+                                    handleInputChange("question", Number(value));
+                                    if (selectedQ) {
+                                        handleInputChange("question_label", selectedQ.question_label);
+                                        handleInputChange("max_marks", selectedQ.max_marks);
+                                    }
+                                }}
                                 required
-                            />
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select Question" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {examQuestions.map((q) => (
+                                        <SelectItem key={q.id} value={q.id!.toString()}>
+                                            ID: {q.id} - {q.question_label} ({q.max_marks} Marks)
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="question_label">Question Label *</Label>
@@ -130,7 +197,7 @@ export default function CreateQuestionPaperQuestionPage() {
                             <Button type="button" variant="outline">Cancel</Button>
                         </Link>
                         <Button type="submit" disabled={isSubmitting}>
-                            {isSubmitting ? "Creating..." : "Create Question"}
+                            {isSubmitting ? "Creating..." : "Create Mapping"}
                         </Button>
                     </CardFooter>
                 </Card>

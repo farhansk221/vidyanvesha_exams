@@ -51,7 +51,7 @@ function ExamSessionStudentContent() {
                 ExamService.getAll().catch(() => [])
             ]);
 
-            setSessionStudents(sessionStudentsData || []);
+            setSessionStudents(Array.isArray(sessionStudentsData) ? sessionStudentsData : (sessionStudentsData as any)?.results || []);
 
             const studMap: Record<number, string> = {};
             studentsData.forEach((s: Student) => {

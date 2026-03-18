@@ -22,8 +22,9 @@ export interface ExamSessionStudent {
 
 export const ExamSessionStudentService = {
     async getAll(): Promise<ExamSessionStudent[]> {
-        const response = await api.get<ExamSessionStudent[]>(API_CONTS.EXAM_SESSION_STUDENT.LIST);
-        return response.data;
+        const response = await api.get<any>(API_CONTS.EXAM_SESSION_STUDENT.LIST);
+        const data = response.data;
+        return Array.isArray(data) ? data : data.results || [];
     },
 
     async getById(id: number): Promise<ExamSessionStudent> {

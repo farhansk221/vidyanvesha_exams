@@ -12,8 +12,9 @@ export interface QuestionPaperQuestion {
 
 export const QuestionPaperQuestionService = {
     async getAll(): Promise<QuestionPaperQuestion[]> {
-        const response = await api.get<QuestionPaperQuestion[]>(API_CONTS.QUESTION_PAPER_QUESTIONS.LIST);
-        return response.data;
+        const response = await api.get<any>(API_CONTS.QUESTION_PAPER_QUESTIONS.LIST);
+        const data = response.data;
+        return Array.isArray(data) ? data : data.results || [];
     },
 
     async getById(id: number): Promise<QuestionPaperQuestion> {

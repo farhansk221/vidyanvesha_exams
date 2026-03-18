@@ -44,6 +44,7 @@ export default function QuestionPaperQuestionsPage() {
             ]);
 
             setItems(Array.isArray(qpqData) ? qpqData : []);
+            console.log(qpqData)
 
             const pMap: Record<number, string> = {};
             (papersData || []).forEach((p: any) => {
@@ -109,7 +110,7 @@ export default function QuestionPaperQuestionsPage() {
                             <TableHead>QUESTION</TableHead>
                             <TableHead>SEQUENCE</TableHead>
                             <TableHead>MAX MARKS</TableHead>
-                             <TableHead className="text-right">Actions</TableHead>
+                            <TableHead className="text-right">Actions</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -139,7 +140,7 @@ export default function QuestionPaperQuestionsPage() {
                                     <TableCell>{item.question ? questionsMap[item.question] || `Question ${item.question}` : "N/A"}</TableCell>
                                     <TableCell>{item.question_sequence ?? "N/A"}</TableCell>
                                     <TableCell>{item.max_marks ?? "N/A"}</TableCell>
-                                     <TableCell className="text-right">
+                                    <TableCell className="text-right">
                                         <DropdownMenu>
                                             <DropdownMenuTrigger asChild>
                                                 <Button variant="ghost" className="h-8 w-8 p-0">
@@ -151,13 +152,19 @@ export default function QuestionPaperQuestionsPage() {
                                                 <DropdownMenuLabel>Actions</DropdownMenuLabel>
                                                 <DropdownMenuSeparator />
                                                 <DropdownMenuItem className="cursor-pointer" asChild>
+                                                    <Link href={`/question-paper-questions/${item.id}`}>
+                                                        <Eye className="mr-2 h-4 w-4" />
+                                                        <span>View</span>
+                                                    </Link>
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem className="cursor-pointer" asChild>
                                                     <Link href={`/question-paper-questions/${item.id}/edit`}>
                                                         <Pencil className="mr-2 h-4 w-4" />
                                                         <span>Edit</span>
                                                     </Link>
                                                 </DropdownMenuItem>
                                                 <DropdownMenuSeparator />
-                                                <DropdownMenuItem 
+                                                <DropdownMenuItem
                                                     className="cursor-pointer text-red-600 focus:text-red-600"
                                                     onClick={() => item.id && handleDelete(item.id)}
                                                 >
@@ -175,4 +182,4 @@ export default function QuestionPaperQuestionsPage() {
             </div>
         </div>
     );
-}
+}

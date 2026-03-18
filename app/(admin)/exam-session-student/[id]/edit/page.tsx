@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,52 +17,101 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/ui/card";
-import type { ExamSessionStudent } from "@/services/ExamSessionStudentService";
-
-const mockData: Omit<ExamSessionStudent, "id"> = {
-    exam_session: 1,
-    student: 10001,
-    program: 10,
-    semester: 6,
-    approval_status: "Getting Started",
-    exam_fees_asked_to_pay: 1500,
-    exam_fees_paid: 0,
-    exam_form_submitted: false,
-    seat_no: null,
-    hold_result: false,
-    student_council_benefit: false,
-    condonation_applied: false,
-    condonation_course: null,
-    condonation_exam_category: null,
-    condonation_marks: 0,
-};
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
+import { ExamSessionStudentService, type ExamSessionStudent } from "@/services/ExamSessionStudentService";
+import { ExamSessionService, type ExamSession } from "@/services/ExamSessionServices";
+import { StudentService, type Student } from "@/services/StudentService";
+import { ExamService } from "@/services/ExamServices";
 
 export default function EditExamSessionStudentPage() {
     const router = useRouter();
     const params = useParams();
     const id = params.id as string;
 
-    const [formData, setFormData] = useState<Omit<ExamSessionStudent, "id">>(mockData);
+    const [formData, setFormData] = useState<Omit<ExamSessionStudent, "id"> | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isLoadingData, setIsLoadingData] = useState(true);
+    const [examSessions, setExamSessions] = useState<ExamSession[]>([]);
+    const [students, setStudents] = useState<Student[]>([]);
+    const [programs, setPrograms] = useState<any[]>([]);
 
-    const handleInputChange = (field: keyof typeof formData, value: string | number | boolean | null) => {
-        setFormData((prev) => ({ ...prev, [field]: value }));
+    useEffect(() => {
+        if (!id) return;
+
+        const fetchData = async () => {
+            try {
+                const [item, sessions, studentsData, programsData] = await Promise.all([
+                    ExamSessionStudentService.getById(Number(id)),
+                    ExamSessionService.getAll().catch(() => []),
+                    StudentService.getAll().catch(() => []),
+                    ExamService.getPrograms().catch(() => [])
+                ]);
+
+                // Omit 'id' from the item to match formData type
+                const { id: _, ...data } = item as any;
+                setFormData(data);
+                setExamSessions(sessions);
+                setStudents(studentsData);
+                setPrograms(programsData);
+            } catch (error) {
+                console.error("Failed to fetch data:", error);
+                toast.error("Failed to load details");
+            } finally {
+                setIsLoadingData(false);
+            }
+        };
+        fetchData();
+    }, [id]);
+
+    const handleInputChange = (field: keyof Omit<ExamSessionStudent, "id">, value: any) => {
+        setFormData((prev) => prev ? ({ ...prev, [field]: value }) : null);
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (!formData) return;
+        if (!formData.exam_session || !formData.student) {
+            toast.error("Please select both an exam session and a student");
+            return;
+        }
+
         setIsSubmitting(true);
         try {
-            await new Promise((resolve) => setTimeout(resolve, 500));
-            console.log("Updated data for id", id, ":", formData);
-            toast.success("Exam session student updated successfully!");
+            await ExamSessionStudentService.update(Number(id), formData);
+            toast.success("Student enrollment updated successfully!");
             router.push("/exam-session-student");
-        } catch {
-            toast.error("Failed to update exam session student.");
+        } catch (error) {
+            console.error(error);
+            toast.error("Failed to update enrollment.");
         } finally {
             setIsSubmitting(false);
         }
     };
+
+    if (isLoadingData) {
+        return (
+            <div className="flex h-screen items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+        );
+    }
+
+    if (!formData) {
+        return (
+            <div className="flex h-[50vh] flex-col items-center justify-center gap-4">
+                <p className="text-muted-foreground">Enrollment not found.</p>
+                <Link href="/exam-session-student">
+                    <Button variant="outline">Back to List</Button>
+                </Link>
+            </div>
+        );
+    }
 
     return (
         <div className="p-6 max-w-4xl mx-auto space-y-6">
@@ -74,7 +123,7 @@ export default function EditExamSessionStudentPage() {
                 </Link>
                 <div>
                     <h1 className="text-2xl font-bold tracking-tight">Edit Exam Session Student</h1>
-                    <p className="text-muted-foreground">Update exam session student (ID: {id})</p>
+                    <p className="text-muted-foreground">Update exam session enrollment (ID: {id})</p>
                 </div>
             </div>
 
@@ -87,36 +136,60 @@ export default function EditExamSessionStudentPage() {
                     </CardHeader>
                     <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-2">
-                            <Label htmlFor="exam_session">Exam Session ID *</Label>
-                            <Input
-                                id="exam_session"
-                                type="number"
-                                placeholder="e.g. 1"
-                                value={formData.exam_session ?? ""}
-                                onChange={(e) => handleInputChange("exam_session", e.target.value ? Number(e.target.value) : null)}
+                            <Label htmlFor="exam_session">Exam Session *</Label>
+                            <Select
+                                value={formData.exam_session?.toString() || ""}
+                                onValueChange={(value) => handleInputChange("exam_session", Number(value))}
                                 required
-                            />
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select Session" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {examSessions.map((s) => (
+                                        <SelectItem key={s.id} value={s.id!.toString()}>
+                                            {s.exam_session_name}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="student">Student ID *</Label>
-                            <Input
-                                id="student"
-                                type="number"
-                                placeholder="e.g. 10001"
-                                value={formData.student ?? ""}
-                                onChange={(e) => handleInputChange("student", e.target.value ? Number(e.target.value) : null)}
+                            <Label htmlFor="student">Student *</Label>
+                            <Select
+                                value={formData.student?.toString() || ""}
+                                onValueChange={(value) => handleInputChange("student", Number(value))}
                                 required
-                            />
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select Student" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {students.map((s) => (
+                                        <SelectItem key={s.id} value={s.id!.toString()}>
+                                            Student {s.student}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="program">Program ID</Label>
-                            <Input
-                                id="program"
-                                type="number"
-                                placeholder="e.g. 10"
-                                value={formData.program ?? ""}
-                                onChange={(e) => handleInputChange("program", e.target.value ? Number(e.target.value) : null)}
-                            />
+                            <Label htmlFor="program">Program</Label>
+                            <Select
+                                value={formData.program?.toString() || ""}
+                                onValueChange={(value) => handleInputChange("program", Number(value))}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select Program" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {programs.map((p) => (
+                                        <SelectItem key={p.id} value={p.id!.toString()}>
+                                            {p.prog_name}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="semester">Semester</Label>
